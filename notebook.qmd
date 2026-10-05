@@ -6,9 +6,11 @@ import plotly.express as px
 
 make_choropleth.OUT_DIR.mkdir(parents=True, exist_ok=True)
 
+GEOJSON_PATH = pathlib.Path("DISTRITOS_PY_CNPV2022.geojson")
+
 raw = json.loads(make_choropleth.RAW_PATH.read_text(encoding="utf-8"))
 records = raw["records"]
-geo = json.loads(make_choropleth.GEOJSON_PATH.read_text(encoding="utf-8"))
+geo = json.loads(GEOJSON_PATH.read_text(encoding="utf-8"))
 features = geo["features"]
 
 collection, rows, unmatched_geo, unmatched_tsje = make_choropleth.build_feature_collection(records, features)
