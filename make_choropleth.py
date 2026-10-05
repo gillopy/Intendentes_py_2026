@@ -36,7 +36,22 @@ from matplotlib.patches import Patch
 import pandas as pd
 
 RAW_PATH = pathlib.Path("data/raw_results.json")
-GEOJSON_PATH = pathlib.Path("DISTRITOS_PY_CNPV2022.geojson.txt")
+# The census file is tracked as "DISTRITOS_PY_CNPV2022.geojson"; older checkouts
+# may still have the ".geojson.txt" name, so accept either.
+GEOJSON_CANDIDATES = (
+    "DISTRITOS_PY_CNPV2022.geojson",
+    "DISTRITOS_PY_CNPV2022.geojson.txt",
+)
+
+
+def resolve_geojson_path() -> pathlib.Path:
+    for candidate in GEOJSON_CANDIDATES:
+        path = pathlib.Path(candidate)
+        if path.exists():
+            return path
+    raise FileNotFoundError(
+        "census geojson not found; expected one of: " + ", ".join(GEOJSON_CANDIDATES)
+    )
 OUT_DIR = pathlib.Path("output")
 
 MATCH_THRESHOLD = 0.60
@@ -388,7 +403,7 @@ def main() -> int:
 
     raw = json.loads(RAW_PATH.read_text(encoding="utf-8"))
     records = raw["records"]
-    geo = json.loads(GEOJSON_PATH.read_text(encoding="utf-8"))
+    geo = json.loads(resolve_geojson_path().read_text(encoding="utf-8"))
     features = geo["features"]
 
     collection, rows, unmatched_geo, unmatched_tsje = build_feature_collection(records, features)

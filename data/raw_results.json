@@ -1,5 +1,5 @@
 {
-  "scraped_at": "2026-10-04T23:39:58.128713+00:00",
+  "scraped_at": "2026-10-05T15:29:24.645693+00:00",
   "count": 263,
   "records": [
     {
@@ -70,21 +70,21 @@
           "nomCandidato": "BERNI VILLALBA",
           "desPartido": "PARTIDO COLORADO",
           "colLista": "255,0,0",
-          "votos": 16337
+          "votos": 16475
         },
         {
           "numLista": "2",
           "nomCandidato": "TATI URBIETA",
           "desPartido": "ALIANZA UNIDOS POR CONCEPCION",
           "colLista": "0,43,199",
-          "votos": 8352
+          "votos": 8468
         },
         {
           "numLista": "123",
           "nomCandidato": "EL PROFE. ARQUI. FRANCISCO HUERTA",
           "desPartido": "ALIANZA JUNTOS POR CONCEPCION",
           "colLista": "255,167,96",
-          "votos": 781
+          "votos": 782
         }
       ],
       "winner": {
@@ -93,18 +93,18 @@
         "nomCandidato": "BERNI VILLALBA",
         "desPartido": "PARTIDO COLORADO",
         "colLista": "255,0,0",
-        "votos": 16337,
+        "votos": 16475,
         "imgCandidato": "CANDIDATO-657956",
         "candidatosPref": null
       },
       "totales": {
         "totalMesas": 155,
-        "mesasPublicadas": 153,
-        "blancos": 976,
+        "mesasPublicadas": 155,
+        "blancos": 979,
         "nulos": 35,
-        "totalVotos": 26485,
+        "totalVotos": 26743,
         "canElectores": 53128,
-        "canElectoresPublicados": 52565,
+        "canElectoresPublicados": 53128,
         "nocomputados": 4,
         "tipCandidatura": 1
       }
@@ -206,28 +206,28 @@
           "nomCandidato": "SERGIO CARRILLO",
           "desPartido": "PARTIDO COLORADO",
           "colLista": "255,0,0",
-          "votos": 7601
+          "votos": 7671
         },
         {
           "numLista": "5",
           "nomCandidato": "JORGE CENTURION",
           "desPartido": "ALIANZA UNIDOS POR HORQUETA",
           "colLista": "255,255,255",
-          "votos": 7432
+          "votos": 7501
         },
         {
           "numLista": "6",
           "nomCandidato": "ELVIO AREVALOS DASPET",
           "desPartido": "PARTIDO PATRIOTAS INDEPENDIENTES",
           "colLista": "152,173,212",
-          "votos": 196
+          "votos": 199
         },
         {
           "numLista": "15",
           "nomCandidato": "LUCAS SILVA SARTORIO",
           "desPartido": "ALIANZA ACUERDO GUARANI HORQUETA",
           "colLista": "255,234,21",
-          "votos": 458
+          "votos": 461
         }
       ],
       "winner": {
@@ -236,18 +236,18 @@
         "nomCandidato": "SERGIO CARRILLO",
         "desPartido": "PARTIDO COLORADO",
         "colLista": "255,0,0",
-        "votos": 7601,
+        "votos": 7671,
         "imgCandidato": "CANDIDATO-658025",
         "candidatosPref": null
       },
       "totales": {
         "totalMesas": 97,
-        "mesasPublicadas": 96,
+        "mesasPublicadas": 97,
         "blancos": 163,
         "nulos": 46,
-        "totalVotos": 15897,
+        "totalVotos": 16042,
         "canElectores": 33122,
-        "canElectoresPublicados": 32772,
+        "canElectoresPublicados": 33122,
         "nocomputados": 1,
         "tipCandidatura": 1
       }
@@ -2603,21 +2603,21 @@
           "nomCandidato": "LUIS CANTERO",
           "desPartido": "PARTIDO COLORADO",
           "colLista": "255,0,0",
-          "votos": 1135
+          "votos": 1185
         },
         {
           "numLista": "2",
           "nomCandidato": "MANUEL FERNANDEZ",
           "desPartido": "PARTIDO LIBERAL RADICAL AUTENTICO",
           "colLista": "0,43,199",
-          "votos": 928
+          "votos": 1083
         },
         {
           "numLista": "50",
           "nomCandidato": "RODRIGO KIRCHHOFER",
           "desPartido": "MOVIMIENTO TODOS POR VALENZUELA",
           "colLista": "29,83,51",
-          "votos": 2178
+          "votos": 2439
         }
       ],
       "winner": {
@@ -2626,19 +2626,19 @@
         "nomCandidato": "RODRIGO KIRCHHOFER",
         "desPartido": "MOVIMIENTO TODOS POR VALENZUELA",
         "colLista": "29,83,51",
-        "votos": 2178,
+        "votos": 2439,
         "imgCandidato": "CANDIDATO-664150",
         "candidatosPref": null
       },
       "totales": {
         "totalMesas": 20,
-        "mesasPublicadas": 18,
-        "blancos": 46,
-        "nulos": 23,
-        "totalVotos": 4310,
+        "mesasPublicadas": 20,
+        "blancos": 55,
+        "nulos": 24,
+        "totalVotos": 4788,
         "canElectores": 6709,
-        "canElectoresPublicados": 6054,
-        "nocomputados": 0,
+        "canElectoresPublicados": 6709,
+        "nocomputados": 2,
         "tipCandidatura": 1
       }
     },
@@ -3219,14 +3219,14 @@
           "nomCandidato": "DR. ANTHONY",
           "desPartido": "PARTIDO COLORADO",
           "colLista": "255,0,0",
-          "votos": 1022
+          "votos": 1475
         },
         {
           "numLista": "2",
           "nomCandidato": "DERLIS RUBEN DUARTE DUARTE",
           "desPartido": "PARTIDO LIBERAL RADICAL AUTENTICO",
           "colLista": "0,43,199",
-          "votos": 1341
+          "votos": 1889
         }
       ],
       "winner": {
@@ -3235,18 +3235,18 @@
         "nomCandidato": "DERLIS RUBEN DUARTE DUARTE",
         "desPartido": "PARTIDO LIBERAL RADICAL AUTENTICO",
         "colLista": "0,43,199",
-        "votos": 1341,
+        "votos": 1889,
         "imgCandidato": "CANDIDATO-669377",
         "candidatosPref": null
       },
       "totales": {
         "totalMesas": 14,
-        "mesasPublicadas": 10,
-        "blancos": 32,
-        "nulos": 25,
-        "totalVotos": 2420,
+        "mesasPublicadas": 14,
+        "blancos": 41,
+        "nulos": 35,
+        "totalVotos": 3440,
         "canElectores": 4851,
-        "canElectoresPublicados": 3451,
+        "canElectoresPublicados": 4851,
         "nocomputados": 0,
         "tipCandidatura": 1
       }
@@ -3921,21 +3921,21 @@
           "nomCandidato": "SILVA",
           "desPartido": "PARTIDO COLORADO",
           "colLista": "255,0,0",
-          "votos": 499
+          "votos": 973
         },
         {
           "numLista": "28",
           "nomCandidato": "CRISTIAN DREIER",
           "desPartido": "MOVIMIENTO AVANZAMOS JUNTOS NUEVA TOLEDO",
           "colLista": "82,82,82",
-          "votos": 364
+          "votos": 776
         },
         {
           "numLista": "123",
           "nomCandidato": "YDEMAR ZWIRTES SCHONR",
           "desPartido": "PARTIDO YO CREO CONCIENCIA DEMOCRATICA NACIONAL",
           "colLista": "255,167,96",
-          "votos": 275
+          "votos": 637
         }
       ],
       "winner": {
@@ -3944,18 +3944,18 @@
         "nomCandidato": "SILVA",
         "desPartido": "PARTIDO COLORADO",
         "colLista": "255,0,0",
-        "votos": 499,
+        "votos": 973,
         "imgCandidato": "CANDIDATO-659751",
         "candidatosPref": null
       },
       "totales": {
         "totalMesas": 10,
-        "mesasPublicadas": 5,
-        "blancos": 18,
-        "nulos": 25,
-        "totalVotos": 1181,
+        "mesasPublicadas": 10,
+        "blancos": 35,
+        "nulos": 42,
+        "totalVotos": 2463,
         "canElectores": 3598,
-        "canElectoresPublicados": 1750,
+        "canElectoresPublicados": 3598,
         "nocomputados": 0,
         "tipCandidatura": 1
       }
@@ -6633,14 +6633,14 @@
           "nomCandidato": "OSCAR CUENCA",
           "desPartido": "PARTIDO COLORADO",
           "colLista": "255,0,0",
-          "votos": 2399
+          "votos": 2544
         },
         {
           "numLista": "2",
           "nomCandidato": "VICTOR BEBECHO LARRE",
           "desPartido": "PARTIDO LIBERAL RADICAL AUTENTICO",
           "colLista": "0,43,199",
-          "votos": 2038
+          "votos": 2228
         }
       ],
       "winner": {
@@ -6649,18 +6649,18 @@
         "nomCandidato": "OSCAR CUENCA",
         "desPartido": "PARTIDO COLORADO",
         "colLista": "255,0,0",
-        "votos": 2399,
+        "votos": 2544,
         "imgCandidato": "CANDIDATO-661115",
         "candidatosPref": null
       },
       "totales": {
         "totalMesas": 19,
-        "mesasPublicadas": 18,
-        "blancos": 52,
-        "nulos": 7,
-        "totalVotos": 4497,
+        "mesasPublicadas": 19,
+        "blancos": 54,
+        "nulos": 8,
+        "totalVotos": 4835,
         "canElectores": 6544,
-        "canElectoresPublicados": 6137,
+        "canElectoresPublicados": 6544,
         "nocomputados": 1,
         "tipCandidatura": 1
       }
@@ -7256,14 +7256,14 @@
           "nomCandidato": "RUH MERCEDES MEDINA YEGROS",
           "desPartido": "PARTIDO COLORADO",
           "colLista": "255,0,0",
-          "votos": 1738
+          "votos": 1995
         },
         {
           "numLista": "2",
           "nomCandidato": "CAROLINA BENITEZ",
           "desPartido": "PARTIDO LIBERAL RADICAL AUTENTICO",
           "colLista": "0,43,199",
-          "votos": 917
+          "votos": 1005
         }
       ],
       "winner": {
@@ -7272,18 +7272,18 @@
         "nomCandidato": "RUH MERCEDES MEDINA YEGROS",
         "desPartido": "PARTIDO COLORADO",
         "colLista": "255,0,0",
-        "votos": 1738,
+        "votos": 1995,
         "imgCandidato": "CANDIDATO-661431",
         "candidatosPref": null
       },
       "totales": {
         "totalMesas": 18,
-        "mesasPublicadas": 16,
-        "blancos": 43,
-        "nulos": 8,
-        "totalVotos": 2706,
+        "mesasPublicadas": 18,
+        "blancos": 47,
+        "nulos": 12,
+        "totalVotos": 3059,
         "canElectores": 6099,
-        "canElectoresPublicados": 5310,
+        "canElectoresPublicados": 6099,
         "nocomputados": 0,
         "tipCandidatura": 1
       }
@@ -7714,14 +7714,14 @@
           "nomCandidato": "DR. QUEVEDO",
           "desPartido": "PARTIDO COLORADO",
           "colLista": "255,0,0",
-          "votos": 507
+          "votos": 2085
         },
         {
           "numLista": "2",
           "nomCandidato": "ADRIANA DEL CARMEN NERVI ALDERETE",
           "desPartido": "PARTIDO LIBERAL RADICAL AUTENTICO",
           "colLista": "0,43,199",
-          "votos": 367
+          "votos": 1597
         }
       ],
       "winner": {
@@ -7730,18 +7730,18 @@
         "nomCandidato": "DR. QUEVEDO",
         "desPartido": "PARTIDO COLORADO",
         "colLista": "255,0,0",
-        "votos": 507,
+        "votos": 2085,
         "imgCandidato": "CANDIDATO-661645",
         "candidatosPref": null
       },
       "totales": {
         "totalMesas": 17,
-        "mesasPublicadas": 4,
-        "blancos": 8,
-        "nulos": 1,
-        "totalVotos": 883,
+        "mesasPublicadas": 17,
+        "blancos": 36,
+        "nulos": 5,
+        "totalVotos": 3723,
         "canElectores": 5942,
-        "canElectoresPublicados": 1392,
+        "canElectoresPublicados": 5942,
         "nocomputados": 0,
         "tipCandidatura": 1
       }
@@ -10933,7 +10933,7 @@
           "nomCandidato": "TOÑIÑO",
           "desPartido": "PARTIDO COLORADO",
           "colLista": "255,0,0",
-          "votos": 0
+          "votos": 925
         }
       ],
       "winner": {
@@ -10942,18 +10942,18 @@
         "nomCandidato": "TOÑIÑO",
         "desPartido": "PARTIDO COLORADO",
         "colLista": "255,0,0",
-        "votos": 0,
+        "votos": 925,
         "imgCandidato": "CANDIDATO-663275",
         "candidatosPref": null
       },
       "totales": {
         "totalMesas": 5,
-        "mesasPublicadas": 0,
-        "blancos": 0,
-        "nulos": 0,
-        "totalVotos": 0,
+        "mesasPublicadas": 5,
+        "blancos": 101,
+        "nulos": 5,
+        "totalVotos": 1031,
         "canElectores": 1811,
-        "canElectoresPublicados": 0,
+        "canElectoresPublicados": 1811,
         "nocomputados": 0,
         "tipCandidatura": 1
       }
@@ -11542,28 +11542,28 @@
           "nomCandidato": "ALBERTO ROMERO",
           "desPartido": "PARTIDO COLORADO",
           "colLista": "255,0,0",
-          "votos": 1973
+          "votos": 2202
         },
         {
           "numLista": "2",
           "nomCandidato": "GUSTAVO ADOLFO FERNANDEZ ROMERO",
           "desPartido": "PARTIDO LIBERAL RADICAL AUTENTICO",
           "colLista": "0,43,199",
-          "votos": 521
+          "votos": 573
         },
         {
           "numLista": "300",
           "nomCandidato": "SILVINO FERNANDEZ RAMIREZ",
           "desPartido": "PARTIDO PATRIA SOÑADA",
           "colLista": "185,205,190",
-          "votos": 237
+          "votos": 312
         },
         {
           "numLista": "911",
           "nomCandidato": "DRA. BLANCA AMARILLA",
           "desPartido": "PARTIDO CRUZADA NACIONAL",
           "colLista": "0,0,0",
-          "votos": 364
+          "votos": 368
         }
       ],
       "winner": {
@@ -11572,18 +11572,18 @@
         "nomCandidato": "ALBERTO ROMERO",
         "desPartido": "PARTIDO COLORADO",
         "colLista": "255,0,0",
-        "votos": 1973,
+        "votos": 2202,
         "imgCandidato": "CANDIDATO-663578",
         "candidatosPref": null
       },
       "totales": {
         "totalMesas": 16,
-        "mesasPublicadas": 15,
-        "blancos": 19,
+        "mesasPublicadas": 16,
+        "blancos": 27,
         "nulos": 22,
-        "totalVotos": 3136,
+        "totalVotos": 3504,
         "canElectores": 5115,
-        "canElectoresPublicados": 4732,
+        "canElectoresPublicados": 5115,
         "nocomputados": 0,
         "tipCandidatura": 1
       }
@@ -11864,14 +11864,14 @@
           "nomCandidato": "RODRIGO ESPINOLA",
           "desPartido": "PARTIDO COLORADO",
           "colLista": "255,0,0",
-          "votos": 2441
+          "votos": 2864
         },
         {
           "numLista": "27",
           "nomCandidato": "CLAUDELINO RODAS NUÑEZ",
           "desPartido": "ALIANZA JUNTOS POR FILADELFIA",
           "colLista": "154,219,247",
-          "votos": 4789
+          "votos": 5338
         }
       ],
       "winner": {
@@ -11880,18 +11880,18 @@
         "nomCandidato": "CLAUDELINO RODAS NUÑEZ",
         "desPartido": "ALIANZA JUNTOS POR FILADELFIA",
         "colLista": "154,219,247",
-        "votos": 4789,
+        "votos": 5338,
         "imgCandidato": "CANDIDATO-673961",
         "candidatosPref": null
       },
       "totales": {
         "totalMesas": 40,
-        "mesasPublicadas": 36,
-        "blancos": 115,
-        "nulos": 29,
-        "totalVotos": 7377,
+        "mesasPublicadas": 40,
+        "blancos": 125,
+        "nulos": 30,
+        "totalVotos": 8360,
         "canElectores": 13712,
-        "canElectoresPublicados": 12456,
+        "canElectoresPublicados": 13712,
         "nocomputados": 3,
         "tipCandidatura": 1
       }
@@ -11950,28 +11950,28 @@
           "nomCandidato": "ELENA NUÑEZ",
           "desPartido": "PARTIDO COLORADO",
           "colLista": "255,0,0",
-          "votos": 1116
+          "votos": 1208
         },
         {
           "numLista": "7",
           "nomCandidato": "VICTOR DIAZ",
           "desPartido": "ALIANZA UNIDOS POR MARISCAL",
           "colLista": "81,122,0",
-          "votos": 2613
+          "votos": 2788
         },
         {
           "numLista": "30",
           "nomCandidato": "SILVERIO GARCIA",
           "desPartido": "PARTIDO NACIONAL DE LA GENTE 30 A",
           "colLista": "94,98,115",
-          "votos": 62
+          "votos": 68
         },
         {
           "numLista": "123",
           "nomCandidato": "CAROLINA GONZALEZ SAMUDIO",
           "desPartido": "ALIANZA FUERZA MARISCAL",
           "colLista": "255,167,96",
-          "votos": 1632
+          "votos": 1677
         }
       ],
       "winner": {
@@ -11980,18 +11980,18 @@
         "nomCandidato": "VICTOR DIAZ",
         "desPartido": "ALIANZA UNIDOS POR MARISCAL",
         "colLista": "81,122,0",
-        "votos": 2613,
+        "votos": 2788,
         "imgCandidato": "CANDIDATO-668197",
         "candidatosPref": null
       },
       "totales": {
         "totalMesas": 28,
-        "mesasPublicadas": 27,
-        "blancos": 86,
-        "nulos": 45,
-        "totalVotos": 5555,
+        "mesasPublicadas": 28,
+        "blancos": 90,
+        "nulos": 46,
+        "totalVotos": 5878,
         "canElectores": 9460,
-        "canElectoresPublicados": 9081,
+        "canElectoresPublicados": 9460,
         "nocomputados": 1,
         "tipCandidatura": 1
       }
