@@ -1,125 +1,154 @@
 # Intendentes PY 2026
 
-Choropleth of the **2026 Paraguayan municipal-election mayoral winners**
-(`INTENDENTE MUNICIPAL`): scrape the official TSJE preliminary-results portal,
-join the results to the 2022 census district polygons, and paint every one of
-the 263 districts with the winning party's official color.
+Mapa coroplético de los **ganadores a intendente** en las elecciones municipales
+de Paraguay 2026: se toma el portal preliminar del TSJE, se une cada distrito
+con su polígono censal y se pinta cada uno de los **263 distritos** con el color
+oficial del partido ganador.
 
-## What it produces
-
-| Output | Description |
+| | |
 | --- | --- |
-| `output/choropleth_intendentes_2026.png` | Static choropleth (matplotlib), districts painted by winner color + legend |
-| `output/mapa_intendentes_2026.html` | Interactive map (folium) with per-district tooltips |
-| `output/distritos_intendentes_2026.geojson` | Census polygons enriched with the winner, votes, %, color and match score |
-| `output/resumen_partidos.csv` | Districts won per party (count + share) |
-| `data/raw_results.json` | Raw scrape: candidates, winner and totals per district |
+| **Fuente electoral** | [resultados.tsje.gov.py](https://resultados.tsje.gov.py) — elección `47`, candidatura `1` (INTENDENTE MUNICIPAL) |
+| **Fuente de polígonos** | `DISTRITOS_PY_CNPV2022.geojson.txt` (263 distritos, censo 2022) |
+| **Resultado nacional** | PARTIDO COLORADO 187/263 (71.1%) · PLRA 34 (12.9%) · Yo Creo 3 · 39 alianzas locales con 1 c/u |
 
-## Requirements
+---
 
-- [uv](https://docs.astral.sh/uv/) (manages Python and dependencies)
-- Python 3.13+ (uv fetches it if missing)
+## 🚀 Inicio rápido (2 caminos)
 
-## Quick start
+### Camino A — solo quiero el mapa (sin scrapear, sin navegador)
+
+El resultado ya scrapeado está versionado en `data/raw_results.json`. Alcanza
+con Python + las librerías de render; **no necesitás Playwright**.
 
 ```powershell
-# 1. Install Python + dependencies (creates .venv automatically)
-uv sync
-
-# 2. Install the browser used by the scraper (once)
-uv run playwright install chromium
-
-# 3. Scrape all districts (polite, sequential: ~1-3 min)
-uv run python scrape.py
-
-# 4. Join the results to the polygons and render the maps
+uv sync --no-group scraper     # instala solo matplotlib + pandas + folium
 uv run python make_choropleth.py
 ```
 
-`make_choropleth.py` prints a join report and exits non-zero unless all
-263 districts matched.
+### Camino B — quiero volver a scrapear (actualizar resultados)
 
-### Change the election / candidacy (scalability)
+Necesitás Playwright porque el portal está detrás de un firewall **Sucuri** con
+verificación humana; un `requests.get` normal recibe 403.
 
-The portal is data-driven. To scrape something other than the 2026 mayors,
-edit the two constants at the top of `scrape.py`:
-
-```python
-ELECCION = "47"       # election id   (47 = ELECCIONES MUNICIPALES 2026)
-CANDIDATURA = "1"     # candidacy id  (1 = INTENDENTE MUNICIPAL)
+```powershell
+uv sync                        # instala todo (incluye Playwright)
+uv run playwright install chromium
+uv run python scrape.py        # ~1-3 min, secuencial y respetuoso
+uv run python make_choropleth.py
 ```
 
-Discover valid ids from the page itself:
+`make_choropleth.py` imprime un reporte de join y **sale con error si algún
+distrito no matcheó** (esperado: `263/263`).
 
-- `/publicacion/statics/json/divulgacion/elecciones.js` — available elections
-- `/publicacion/statics/json/divulgacion/candidaturas.js` — candidacies per election
+---
 
-Everything else (districts, departments, API shape) is read dynamically, so the
-same pipeline works for `JUNTA MUNICIPAL` or for future elections without code
-changes.
+## 🧭 ¿Playwright es necesario?
 
-## Data sources
+**Depende para qué:**
 
-- **Results portal** — <https://resultados.tsje.gov.py>
-  - Page: `/publicacion/divulgacion.html`
-  - Results API (same-origin, called from the page to reuse cookies):
-    `/publicacion/dinamics/divulgacion.ajax.php?codeleccion=<E>&candidatura=<C>&departamento=<D>&distrito=<d>`
-  - Catalogs: `/publicacion/statics/json/divulgacion/{distritos,departamentos}.js`
-  - Party color is the API field `colLista` (`"R,G,B"`).
-- **Polygons** — `DISTRITOS_PY_CNPV2022.geojson.txt` (263 census districts).
-  Properties: `DPTO`, `DPTO_DESC`, `DISTRITO`, `DIST_DESC_`, `CLAVE`.
-  Source: 2022 census districts of Paraguay (CNPV2022).
+| Tarea | ¿Playwright? | Por qué |
+| --- | --- | --- |
+| Generar el mapa desde `data/raw_results.json` | ❌ No | `make_choropleth.py` solo lee JSON + geojson y dibuja |
+| Volver a scrapear el TSJE | ✅ Sí | Hay que pasar el challenge Sucuri y hacer 263 fetches same-origin |
+| Cambiar de elección/candidatura | ✅ Sí | implicás volver a scrapear |
 
-## How it works
+`scrape.py` **no trae los datos embebidos**: es el programa que los consigue.
+Playwright es el motor que abre el navegador, pasa el firewall y ejecuta los
+`fetch` con las cookies de la sesión.
 
-1. `scrape.py` — Playwright (headless, `es-PY`) opens the page and passes the
-   **Sucuri** human-verification interstitial, then reads the district catalog
-   and requests the per-district results API for all 18 departments / 263
-   districts. Requests are sequential, ~0.2 s apart, with one retry each.
-2. `make_choropleth.py` — joins the scrape to the polygons **by name** and
-   renders the static and interactive maps plus the summary CSV.
+---
 
-## Gotchas handled (important for anyone forking this)
+## 📦 Qué genera
 
-1. **Department codes are swapped between the two sources.** In the census
-   GeoJSON `16 = BOQUERON` and `17 = ALTO PARAGUAY`, but on the TSJE portal
-   `16 = ALTO PARAGUAY` and `17 = BOQUERON`. Joining by code silently swaps two
-   whole departments — the mapping is explicit in `tsje_dep_to_geo()`.
-2. **District codes differ entirely** (e.g. GeoJSON `02 BELEN` vs TSJE
-   `1-BELEN`), so districts are joined by **name**, never by code.
-3. **Name variants** are resolved with accent stripping, punctuation removal, a
-   token-abbreviation map (`GRAL → GENERAL`, `DR → DOCTOR`, `PTO → PUERTO`, …),
-   an explicit alias map, and greedy best-score 1:1 assignment per department.
-   The per-department counts are an exact bijection (263 = 263).
-4. **Source corruption:** the census GeoJSON stores `Ñ` as literal `??` in two
-   names (`MAYOR JULIO DIONISIO OTA??O`, `DR. RAUL PE?A`), so the alias carries
-   the corrupted form verbatim.
-5. **Sucuri challenge:** the "Verify you're human" control is a custom
-   `cap-widget` `<div role="checkbox">`; its `aria-checked` never flips, so
-   Playwright's `.check()` fails. The scraper uses `.click()` plus a retry loop.
+| Salida | Descripción |
+| --- | --- |
+| `output/choropleth_intendentes_2026.png` | Mapa estático (matplotlib) pintado por color del ganador + leyenda |
+| `output/mapa_intendentes_2026.html` | Mapa interactivo (folium) con tooltip por distrito |
+| `output/distritos_intendentes_2026.geojson` | Polígonos enriquecidos (ganador, votos, %, color, score de match) |
+| `output/resumen_partidos.csv` | Distritos ganados por partido (conteo + %) |
+| `data/raw_results.json` | Scrape crudo: candidatos, ganador y totales por distrito |
 
-## Project layout
+---
+
+## 📁 Estructura del proyecto
 
 ```text
-scrape.py                            Playwright scraper -> data/raw_results.json
-make_choropleth.py                   join + render       -> output/*
-DISTRITOS_PY_CNPV2022.geojson.txt    census district polygons (input)
-test_scrape.py                       minimal Sucuri/API feasibility probe
-pyproject.toml / uv.lock             dependencies (uv)
-data/ , output/                      generated, git-ignored
+scrape.py                            Scraper Playwright        -> data/raw_results.json
+make_choropleth.py                   Join + render             -> output/*
+DISTRITOS_PY_CNPV2022.geojson.txt    Polígonos censales (input)
+test_scrape.py                       Prueba mínima del challenge Sucuri + API
+data/raw_results.json                Datos ya scrapeados (versionados)
+output/                              Generado, git-ignored
+pyproject.toml / uv.lock             Dependencias (uv)
 ```
 
-## Notes
+---
 
-- Network access is required; the portal sits behind a firewall that
-  occasionally returns an "Access Denied" variant — the retry loop absorbs it.
-- Two districts report a winner with 0 votes: this reflects the source payload
-  (all candidates at 0), not a parsing error.
-- `resumen_partidos.csv` is UTF-8 **without** a BOM, so Excel may mis-render
-  `Ñ`. Use an editor that honours UTF-8, or re-save with a BOM if you need
-  Excel compatibility.
+## 🔧 Escalar / adaptar
 
-## License
+### Cambiar de elección o candidatura
 
-Data belongs to the TSJE (results) and the 2022 census (polygons). Code in this
-repository is provided as-is for analysis purposes.
+El portal es data-driven. Editá las dos constantes al inicio de `scrape.py`:
+
+```python
+ELECCION   = "47"   # 47 = ELECCIONES MUNICIPALES 2026
+CANDIDATURA = "1"   # 1 = INTENDENTE MUNICIPAL (2 = JUNTA MUNICIPAL)
+```
+
+Los ids válidos salen del propio portal:
+
+- `/publicacion/statics/json/divulgacion/elecciones.js`
+- `/publicacion/statics/json/divulgacion/candidaturas.js`
+
+El resto (distritos, departamentos, forma de la API) se lee dinámicamente, así
+que el mismo pipeline sirve para otros cargos o elecciones futuras sin tocar el
+código.
+
+### Usar otro conjunto de polígonos
+
+`make_choropleth.py` espera un `FeatureCollection` con las propiedades
+`DPTO`, `DPTO_DESC`, `DISTRITO`, `DIST_DESC_`, `CLAVE`. Si cambiás la fuente,
+ajustá el join por nombre en `make_choropleth.py`.
+
+### Performance
+
+El scrape es secuencial a propósito (~0.2 s entre requests, con reintento). 263
+distritos tardan 1-3 minutos. Para volumen mayor, respetá el rate limit del
+portal antes de paralelizar.
+
+---
+
+## ⚠️ Gotchas que hay que conocer
+
+1. **Los códigos de departamento están permutados** entre las dos fuentes. En el
+   geojson censal `16 = BOQUERON` y `17 = ALTO PARAGUAY`, pero en el TSJE es al
+   revés. Unir por código intercambia dos departamentos enteros — el mapeo
+   explícito está en `tsje_dep_to_geo()`.
+2. **Los códigos de distrito NO coinciden** (geojson `02 BELEN` vs TSJE
+   `1-BELEN`), así que los distritos se unen **por nombre**, nunca por código.
+3. **Variantes de nombre** se resuelven con normalización de acentos, limpieza
+   de puntuación, abreviaturas (`GRAL → GENERAL`, `DR → DOCTOR`, `PTO → PUERTO`,
+   …), un mapa de alias y asignación 1:1 por mejor score dentro de cada
+   departamento. Los conteos por departamento son una biyección exacta (263 = 263).
+4. **Corrupción en la fuente:** el geojson censal guarda la `Ñ` como `??` literal
+   en dos nombres (`MAYOR JULIO DIONISIO OTA??O`, `DR. RAUL PE?A`); el alias
+   lleva la forma corrupta tal cual.
+5. **Challenge Sucuri:** el control "Verify you're human" es un
+   `<div role="checkbox">` custom (`cap-widget`) cuyo `aria-checked` nunca
+   cambia; `.check()` de Playwright falla. El scraper usa `.click()` + reintentos.
+
+---
+
+## 📝 Notas
+
+- El portal a veces devuelve una variante "Access Denied"; el loop de reintentos
+  la absorbe.
+- Dos distritos reportan ganador con 0 votos: refleja el payload de origen (todos
+  los candidatos en 0), no un bug de parseo.
+- `resumen_partidos.csv` está en UTF-8 **sin BOM**, así que Excel puede mostrar
+  mal las `Ñ`. Usá un editor que respete UTF-8, o re-guardá con BOM.
+
+## Licencia
+
+Los datos pertenecen al TSJE (resultados) y al censo 2022 (polígonos). El código
+de este repositorio se ofrece tal cual, con fines analíticos.

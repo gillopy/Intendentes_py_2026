@@ -10,9 +10,7 @@ wheels/
 .venv/
 .venv
 
-# Generated data and outputs (reproducible with the scripts)
-data/
-output/
+# Rendered outputs (reproducible from data/ + the scripts)
 
 # Playwright / MCP artefacts
 .playwright-mcp/
