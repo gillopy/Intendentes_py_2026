@@ -1,5 +1,21 @@
 # Normalize line endings so the repo is consistent across OSes.
 * text=auto eol=lf
 
+# Binary assets must never be line-ending converted.
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.ico binary
+*.pdf binary
+*.zip binary
+
 # The census GeoJSON is a large data file; keep it binary to avoid churn.
 *.geojson.txt -text
+
+# Generated data and rendered outputs are committed on purpose.
+# Keep JSON/GeoJSON byte-exact so re-scrapes produce minimal diffs.
+data/*.json -text
+output/*.geojson -text
+output/*.csv text eol=lf
+output/*.html text eol=lf
