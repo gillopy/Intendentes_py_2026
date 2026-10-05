@@ -11,7 +11,7 @@
 *.zip binary
 
 # The census GeoJSON is a large data file; keep it binary to avoid churn.
-*.geojson.txt -text
+DISTRITOS_PY_CNPV2022.geojson -text
 
 # Generated data and rendered outputs are committed on purpose.
 # Keep JSON/GeoJSON byte-exact so re-scrapes produce minimal diffs.
