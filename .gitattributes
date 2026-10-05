@@ -1,0 +1,5 @@
+# Normalize line endings so the repo is consistent across OSes.
+* text=auto eol=lf
+
+# The census GeoJSON is a large data file; keep it binary to avoid churn.
+*.geojson.txt -text

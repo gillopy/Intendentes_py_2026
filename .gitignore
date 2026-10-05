@@ -1,0 +1,25 @@
+# Python-generated files
+__pycache__/
+*.py[oc]
+build/
+dist/
+wheels/
+*.egg-info
+
+# Virtual environments / tooling
+.venv/
+.venv
+
+# Generated data and outputs (reproducible with the scripts)
+data/
+output/
+
+# Playwright / MCP artefacts
+.playwright-mcp/
+
+# AI tooling state
+.atl/
+
+# OS noise
+.DS_Store
+Thumbs.db
