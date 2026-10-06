@@ -12,6 +12,10 @@ oficial del partido ganador.
 | **Resultado nacional** | PARTIDO COLORADO 187/263 (71.1%) · PLRA 34 (12.9%) · Yo Creo 3 · 39 alianzas locales con 1 c/u |
 | **Demo publicada** | https://gillopy.github.io/Intendentes_py_2026/ |
 
+![Mapa coroplético de intendentes ganadores 2026](output/choropleth_intendentes_2026.png)
+
+> Imagen estática generada por `make_choropleth.py` en `output/choropleth_intendentes_2026.png`.
+
 ---
 
 ## 🚀 Inicio rápido

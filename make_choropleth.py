@@ -25,6 +25,7 @@ import json
 import pathlib
 import unicodedata
 from collections import defaultdict
+from datetime import datetime, timezone
 
 import folium
 import matplotlib
@@ -315,7 +316,7 @@ def build_feature_collection(records, features):
     return collection, rows, unmatched_geo, unmatched_tsje
 
 
-def render_png(collection, out_path):
+def render_png(collection, out_path, subtitle=None):
     by_color = defaultdict(list)
     parties = {}
     xs, ys = [], []
@@ -359,6 +360,8 @@ def render_png(collection, out_path):
         ncol=1,
     )
     fig.tight_layout()
+    if subtitle:
+        fig.text(0.5, 0.02, subtitle, ha="center", va="bottom", fontsize=8, color="#666666")
     fig.savefig(out_path, dpi=200, bbox_inches="tight")
     plt.close(fig)
 
@@ -422,7 +425,15 @@ def main() -> int:
     summary["share"] = (summary["distritos_ganados"] / len(df) * 100).round(2)
     summary.to_csv(OUT_DIR / "resumen_partidos.csv", index=False, encoding="utf-8")
 
-    render_png(collection, OUT_DIR / "choropleth_intendentes_2026.png")
+    scraped = raw.get("scraped_at")
+    subtitle = None
+    if scraped:
+        try:
+            ts = datetime.fromisoformat(scraped).astimezone(timezone.utc)
+            subtitle = f"Datos TSJE al {ts:%Y-%m-%d %H:%M} UTC"
+        except ValueError:
+            subtitle = f"Datos TSJE: {scraped}"
+    render_png(collection, OUT_DIR / "choropleth_intendentes_2026.png", subtitle=subtitle)
     render_html(collection, OUT_DIR / "mapa_intendentes_2026.html")
 
     matched = len(df)
