@@ -1,0 +1,105 @@
+```{python}
+import make_choropleth
+import json
+import pandas as pd
+import plotly.express as px
+
+
+make_choropleth.OUT_DIR.mkdir(parents=True, exist_ok=True)
+
+raw = json.loads(make_choropleth.RAW_PATH.read_text(encoding="utf-8"))
+records = raw["records"]
+geo = json.loads(make_choropleth.resolve_geojson_path().read_text(encoding="utf-8"))
+features = geo["features"]
+
+collection, rows, unmatched_geo, unmatched_tsje = make_choropleth.build_feature_collection(records, features)
+
+df = pd.DataFrame(rows)
+
+make_choropleth.OUT_DIR.joinpath("distritos_intendentes_2026.geojson").write_text(
+    json.dumps(collection, ensure_ascii=False), encoding="utf-8"
+)
+```
+
+
+```{python}
+from shapely.geometry import shape, mapping
+
+simplified_collection = {
+    "type": "FeatureCollection",
+    "features": []
+}
+
+for feature in collection["features"]:
+    geom = shape(feature["geometry"])
+
+    simplified_geom = geom.simplify(
+        tolerance=0.001,
+        preserve_topology=True
+    )
+
+    simplified_collection["features"].append({
+        "type": "Feature",
+        "geometry": mapping(simplified_geom),
+        "properties": feature["properties"],
+    })
+```
+
+
+```{python}
+fig = px.choropleth(
+    df,
+    geojson=simplified_collection,
+    locations="distrito",
+    featureidkey="properties.DIST_DESC_",
+    color="partido",
+    color_discrete_map={
+        row["partido"]: row["color_hex"] for _, row in df.iterrows()
+    },
+    custom_data=[
+        "distrito",
+        "departamento",
+        "votos",
+        "candidato",
+        "partido",
+        "pct",
+    ],
+)
+
+fig.update_traces(
+    hovertemplate=(
+        "<b>%{customdata[0]}</b><br>"
+        "Departamento: %{customdata[1]}<br>"
+        "Votos: %{customdata[2]:,}<br>"
+        "Ganador: %{customdata[3]}<br>"
+        "de %{customdata[4]}<br>"
+        "% votos: %{customdata[5]:.2f}%"
+        "<extra></extra>"
+    )
+)
+
+fig.update_geos(
+    fitbounds="geojson",
+    visible=False
+)
+
+fig.update_layout(
+    title=dict(text="Intendentes ganadores 2026 - Paraguay", font=dict(size=50), automargin=True, yref='paper'),
+    showlegend=False,
+    autosize=True,
+    height=800
+)
+
+fig.show()
+```
+
+```{python}
+import plotly.io as pio
+
+
+pio.write_html(fig, file="output/mapa_intendentes_2026.html")
+```
+
+```{python}
+print("hola")
+```
