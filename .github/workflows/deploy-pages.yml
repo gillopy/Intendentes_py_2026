@@ -25,38 +25,18 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Detect GitHub Pages availability
-        id: pages_check
-        run: |
-          set +e
-          status=$(curl -s -o /dev/null -w "%{http_code}" \
-            -H "Accept: application/vnd.github+json" \
-            "https://api.github.com/repos/${GITHUB_REPOSITORY}/pages")
-          set -e
-
-          if [ "${status}" = "200" ]; then
-            echo "enabled=true" >> "$GITHUB_OUTPUT"
-          else
-            echo "enabled=false" >> "$GITHUB_OUTPUT"
-            echo "::warning::GitHub Pages is not enabled or not accessible for this repository (HTTP ${status}). Skipping deploy steps."
-          fi
-
       - name: Configure GitHub Pages
-        if: steps.pages_check.outputs.enabled == 'true'
         uses: actions/configure-pages@v5
 
-      - name: Prepare static site artifact from output/
-        if: steps.pages_check.outputs.enabled == 'true'
+      - name: Prepare static site (map becomes index.html)
         run: |
-          cp output/mapa_intendentes_2026.html output/index.html
+          mv output/mapa_intendentes_2026.html output/index.html
 
       - name: Upload Pages artifact
-        if: steps.pages_check.outputs.enabled == 'true'
         uses: actions/upload-pages-artifact@v3
         with:
           path: output
 
       - name: Deploy to GitHub Pages
-        if: steps.pages_check.outputs.enabled == 'true'
         id: deployment
         uses: actions/deploy-pages@v4
