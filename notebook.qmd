@@ -4,12 +4,12 @@ import json
 import pandas as pd
 import plotly.express as px
 
-make_choropleth.OUT_DIR.mkdir(parents=True, exist_ok=True)
 
+make_choropleth.OUT_DIR.mkdir(parents=True, exist_ok=True)
 
 raw = json.loads(make_choropleth.RAW_PATH.read_text(encoding="utf-8"))
 records = raw["records"]
-geo = json.loads(make_choropleth.GEOJSON_PATH.read_text(encoding="utf-8"))
+geo = json.loads(make_choropleth.resolve_geojson_path().read_text(encoding="utf-8"))
 features = geo["features"]
 
 collection, rows, unmatched_geo, unmatched_tsje = make_choropleth.build_feature_collection(records, features)
@@ -61,6 +61,7 @@ fig = px.choropleth(
         "departamento",
         "votos",
         "candidato",
+        "partido",
         "pct",
     ],
 )
@@ -71,7 +72,8 @@ fig.update_traces(
         "Departamento: %{customdata[1]}<br>"
         "Votos: %{customdata[2]:,}<br>"
         "Ganador: %{customdata[3]}<br>"
-        "% votos: %{customdata[4]:.2f}%"
+        "de %{customdata[4]}<br>"
+        "% votos: %{customdata[5]:.2f}%"
         "<extra></extra>"
     )
 )
@@ -82,6 +84,7 @@ fig.update_geos(
 )
 
 fig.update_layout(
+    title=dict(text="Intendentes ganadores 2026 - Paraguay", font=dict(size=50), automargin=True, yref='paper'),
     showlegend=False,
     autosize=True,
     height=800
@@ -90,6 +93,12 @@ fig.update_layout(
 fig.show()
 ```
 
+```{python}
+import plotly.io as pio
+
+
+pio.write_html(fig, file="output/mapa_intendentes_2026.html")
+```
 
 ```{python}
 print("hola")
