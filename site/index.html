@@ -1,0 +1,140 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Intendentes PY 2026 — quién gobierna cada municipio</title>
+<meta name="description" content="Mapa y resumen de los intendentes electos en las elecciones municipales de Paraguay 2026: 263 municipios, 18 departamentos.">
+<meta name="color-scheme" content="light">
+<meta property="og:title" content="Intendentes PY 2026 — quién gobierna cada municipio">
+<meta property="og:description" content="El Partido Colorado ganó 187 de los 263 municipios. Mapa, resumen nacional y reparto por departamento.">
+<meta property="og:type" content="website">
+<link rel="preload" href="assets/fonts/archivo-latin.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='15' height='15' x='1' y='1' fill='%23FF0000'/%3E%3Crect width='15' height='15' x='16' y='1' fill='%23002BC7'/%3E%3Crect width='15' height='15' x='1' y='16' fill='%23FFA760'/%3E%3Crect width='15' height='15' x='16' y='16' fill='%239AA0A6'/%3E%3C/svg%3E">
+<link rel="stylesheet" href="assets/styles.css">
+</head>
+<body>
+<a class="skip-link" href="#mapa">Saltar al mapa</a>
+
+<header class="masthead">
+  <div class="wrap masthead-inner">
+    <h1 class="masthead-title">Intendentes <span>PY&nbsp;2026</span></h1>
+    <p class="lede" id="lede"></p>
+    <p class="provenance" id="provenance"></p>
+  </div>
+</header>
+
+<main>
+  <section class="section section--map" id="mapa" aria-labelledby="mapa-title">
+    <div class="wrap">
+      <div class="section-head-bar">
+        <div class="section-head">
+          <h2 id="mapa-title">El mapa del poder municipal</h2>
+          <p class="section-note">Pasá el cursor o tocá un distrito para ver quién ganó. Con la rueda del mouse acercás.</p>
+        </div>
+        <div class="viewswitch" role="group" aria-label="Vista de colores del mapa">
+          <button type="button" data-mode="cat" class="is-on">4 categorías</button>
+          <button type="button" data-mode="party">Todos los partidos</button>
+        </div>
+      </div>
+
+      <div class="map-layout">
+        <div class="map-stage">
+          <svg id="map" viewBox="0 0 1000 1000" role="img"
+               aria-label="Mapa de Paraguay con los 263 distritos pintados según la categoría ganadora."></svg>
+          <div class="map-tooltip" id="map-tooltip" hidden></div>
+          <div class="map-zoom" role="group" aria-label="Zoom del mapa">
+            <button type="button" id="zoom-in" aria-label="Acercar">
+              <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M8 3v10M3 8h10" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
+            </button>
+            <button type="button" id="zoom-out" aria-label="Alejar">
+              <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M3 8h10" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
+            </button>
+            <button type="button" id="zoom-reset" aria-label="Ver todo el país">
+              <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M2 6V2h4M14 6V2h-4M2 10v4h4M14 10v4h-4" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            </button>
+          </div>
+        </div>
+
+        <aside class="map-side">
+          <div class="search">
+            <label class="search-label" for="search-input">Buscá tu municipio</label>
+            <input id="search-input" type="search" autocomplete="off" spellcheck="false"
+                   placeholder="Ej.: Encarnación, Luque, Villarrica"
+                   aria-controls="search-results" aria-expanded="false" aria-autocomplete="list">
+            <ul class="search-results" id="search-results" role="listbox" hidden></ul>
+          </div>
+
+          <div class="district-card" id="district-card" aria-live="polite"></div>
+
+          <ul class="legend legend--compact" id="map-legend"></ul>
+        </aside>
+      </div>
+    </div>
+  </section>
+
+  <section class="section section--summary" aria-labelledby="summary-title">
+    <div class="wrap">
+      <div class="section-head-bar">
+        <div class="section-head">
+          <h2 id="summary-title">Los 263 municipios, uno por cuadro</h2>
+          <p class="section-note" id="summary-note">Cada cuadro es un municipio, pintado con la categoría que ganó.</p>
+        </div>
+        <div class="viewswitch" role="group" aria-label="Vista de colores del resumen">
+          <button type="button" data-mode="cat" class="is-on">4 categorías</button>
+          <button type="button" data-mode="party">Todos los partidos</button>
+        </div>
+      </div>
+
+      <div class="waffle" id="waffle" aria-hidden="true"></div>
+
+      <div class="donut-layout">
+        <div class="donut" id="donut"></div>
+        <ul class="legend legend--full" id="legend"></ul>
+      </div>
+    </div>
+  </section>
+
+  <section class="section section--departments" aria-labelledby="dep-title">
+    <div class="wrap">
+      <div class="section-head">
+        <h2 id="dep-title">Cómo se reparte cada departamento</h2>
+        <p class="section-note">Porcentaje de distritos ganados por cada categoría. Ordenado por dominio del Partido Colorado.</p>
+      </div>
+
+      <div class="bars-head">
+        <span class="bars-head-label">Departamento</span>
+        <ul class="legend legend--inline" id="bars-legend"></ul>
+      </div>
+
+      <ul class="bars" id="bars"></ul>
+    </div>
+  </section>
+</main>
+
+<footer class="footer">
+  <div class="wrap footer-inner">
+    <div class="footer-col">
+      <h2 class="footer-title">Fuentes</h2>
+      <p>Resultados: <a href="https://resultados.tsje.gov.py" rel="noopener">TSJE</a>, Elecciones Municipales 2026 — intendente municipal (elección 47, candidatura 1).</p>
+      <p>Geometrías: CNPV 2022, 263 distritos censales.</p>
+    </div>
+    <div class="footer-col">
+      <h2 class="footer-title">Método</h2>
+      <p id="footer-method"></p>
+    </div>
+    <div class="footer-col">
+      <h2 class="footer-title">Nota</h2>
+      <p>Los colores son el color oficial de cada partido en la fuente. Las categorías agrupan partidos y alianzas locales. Datos preliminares: no son certificación oficial.</p>
+    </div>
+  </div>
+</footer>
+
+<noscript>
+  <div class="wrap"><p>Este sitio necesita JavaScript para dibujar el mapa y los gráficos. El resumen completo está en <code>output/resumen_partidos.csv</code>.</p></div>
+</noscript>
+
+<script src="assets/data.js"></script>
+<script src="assets/app.js"></script>
+</body>
+</html>

@@ -1,4 +1,4 @@
-name: Deploy static map to GitHub Pages
+name: Deploy site to GitHub Pages
 
 'on':
   push:
@@ -28,14 +28,10 @@ jobs:
       - name: Configure GitHub Pages
         uses: actions/configure-pages@v5
 
-      - name: Prepare static site (map becomes index.html)
-        run: |
-          mv output/mapa_intendentes_2026.html output/index.html
-
       - name: Upload Pages artifact
         uses: actions/upload-pages-artifact@v3
         with:
-          path: output
+          path: site
 
       - name: Deploy to GitHub Pages
         id: deployment
