@@ -583,6 +583,49 @@ button { font: inherit; color: inherit; }
 .bar-seg:hover { filter: brightness(1.1); }
 .bar-row.is-active .bar-name { color: var(--ink); }
 
+/* ------------------------------------------------------------------- votes */
+
+.votebars { display: grid; gap: 1rem; max-width: 840px; }
+.votebar {
+  display: grid;
+  grid-template-columns: 150px minmax(0, 1fr) auto;
+  gap: 1rem;
+  align-items: center;
+}
+.votebar-name {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-weight: 700;
+  font-size: 0.9rem;
+  letter-spacing: -0.01em;
+}
+.votebar-swatch { width: 12px; height: 12px; border-radius: 3px; background: var(--c); flex: none; }
+.votebar-track { height: 22px; border-radius: 3px; background: var(--ground); overflow: hidden; }
+.votebar-fill {
+  display: block;
+  height: 100%;
+  width: 100%;
+  background: var(--c);
+  transform-origin: left center;
+  transform: scaleX(0);
+  transition: transform 0.8s var(--ease);
+  transition-delay: calc(var(--i) * 90ms);
+}
+.votebars.is-in .votebar-fill { transform: scaleX(var(--w, 0)); }
+.votebar-figure { text-align: right; line-height: 1.1; font-variant-numeric: tabular-nums; }
+.votebar-figure b { font-size: 1.1rem; font-weight: 800; letter-spacing: -0.02em; }
+.votebar-figure span { display: block; font-size: 0.76rem; color: var(--ink-3); font-weight: 600; }
+
+.votes-total {
+  margin-top: 1.5rem;
+  padding-top: 1.25rem;
+  border-top: 1px solid var(--rule);
+  font-size: 0.85rem;
+  color: var(--ink-2);
+  max-width: 62ch;
+}
+
 /* ------------------------------------------------------------------- footer */
 
 .footer {
@@ -633,6 +676,8 @@ button { font: inherit; color: inherit; }
   .bar-row { grid-template-columns: 1fr; gap: 5px; }
   .bar-name { font-size: 0.82rem; }
   .bar-track { height: 16px; }
+  .votebar { grid-template-columns: 1fr auto; gap: 0.5rem 1rem; }
+  .votebar-track { grid-column: 1 / -1; height: 18px; }
   .waffle { grid-template-columns: repeat(auto-fill, minmax(12px, 1fr)); }
   .legend--many { grid-template-columns: 1fr; }
   .viewswitch { width: 100%; }
@@ -649,4 +694,5 @@ button { font: inherit; color: inherit; }
   [data-reveal],
   .waffle-cell { opacity: 1; transform: none; }
   .bars .bar-fill { transform: none; }
+  .votebars .votebar-fill { transform: scaleX(var(--w, 0)); }
 }

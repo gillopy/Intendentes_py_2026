@@ -95,7 +95,6 @@ Playwright es el motor que abre el navegador, pasa el firewall y ejecuta los
 | `site/assets/data.js` | Datos + geometría simplificada que consume el sitio (generado) |
 | `output/choropleth_intendentes_2026.png` | Mapa estático (matplotlib) pintado por color del ganador + leyenda |
 | `output/resumen_partidos.csv` | Distritos ganados por partido (conteo + %) |
-| `output/distritos_intendentes_2026.geojson` | Polígonos enriquecidos (ganador, votos, %, color) — generado, no versionado (~42 MB) |
 | `data/raw_results.json` | Scrape crudo: candidatos, ganador y totales por distrito |
 
 ---
@@ -109,6 +108,8 @@ tipografía vendorizada) que se abre directo desde el disco o se publica en Page
   búsqueda de municipio y ficha con el intendente electo.
 - **Unit grid** de 263 cuadros (uno por municipio) y **dona** con el reparto nacional.
 - **Barras por departamento** con el % de distritos ganados por cada categoría.
+- **Votos por fuerza** (ANR / Oposición / Alianzas): la ANR ganó el 71% de los
+  municipios pero reunió ~53% de los votos.
 - Toggle **4 categorías / Todos los partidos** (color oficial de las 42 fuerzas).
 
 Se abre sin servidor: `site/index.html`. Para servirlo local:
@@ -209,7 +210,8 @@ portal antes de paralelizar.
   mal las `Ñ`. Usá un editor que respete UTF-8, o re-guardá con BOM.
 - El sitio simplifica la geometría censal (Douglas-Peucker adaptativo) antes de
   embeberla, así que `site/assets/data.js` pesa ~0,4 MB en lugar de los ~44 MB del
-  geojson original. El geojson enriquecido (~42 MB) se genera pero no se versiona.
+  geojson censal original (`DISTRITOS_PY_CNPV2022.geojson`, el único geojson que se
+  versiona: es el input del join).
 
 ## Licencia
 
