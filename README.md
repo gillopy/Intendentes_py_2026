@@ -91,20 +91,39 @@ Playwright es el motor que abre el navegador, pasa el firewall y ejecuta los
 
 | Salida | Descripción |
 | --- | --- |
+| `site/` | Sitio estático publicado: mapa coroplético interactivo + unit grid, dona y barras por departamento |
+| `site/assets/data.js` | Datos + geometría simplificada que consume el sitio (generado) |
 | `output/choropleth_intendentes_2026.png` | Mapa estático (matplotlib) pintado por color del ganador + leyenda |
-| `output/mapa_intendentes_2026.html` | Mapa interactivo (folium) con tooltip por distrito |
-| `output/distritos_intendentes_2026.geojson` | Polígonos enriquecidos (ganador, votos, %, color, score de match) |
 | `output/resumen_partidos.csv` | Distritos ganados por partido (conteo + %) |
+| `output/distritos_intendentes_2026.geojson` | Polígonos enriquecidos (ganador, votos, %, color) — generado, no versionado (~42 MB) |
 | `data/raw_results.json` | Scrape crudo: candidatos, ganador y totales por distrito |
+
+---
+
+## 🎨 El sitio
+
+`site/index.html` es un sitio estático sin dependencias (HTML + CSS + JS vanilla,
+tipografía vendorizada) que se abre directo desde el disco o se publica en Pages:
+
+- **Mapa coroplético** interactivo: hover/tap por distrito, zoom con la rueda,
+  búsqueda de municipio y ficha con el intendente electo.
+- **Unit grid** de 263 cuadros (uno por municipio) y **dona** con el reparto nacional.
+- **Barras por departamento** con el % de distritos ganados por cada categoría.
+- Toggle **4 categorías / Todos los partidos** (color oficial de las 42 fuerzas).
+
+Se abre sin servidor: `site/index.html`. Para servirlo local:
+
+```powershell
+uv run python -m http.server 8123 --directory site
+```
 
 ---
 
 ## 🌐 Publicación (GitHub Pages)
 
-El workflow `.github/workflows/deploy-pages.yml` corre en cada push a `main`:
-toma `output/`, copia `output/mapa_intendentes_2026.html` como `index.html` y lo
-publica en GitHub Pages. Por eso **`output/` se versiona** en el repo (si
-regenerás los mapas, commiteá los cambios para que se actualice la demo).
+El workflow `.github/workflows/deploy-pages.yml` corre en cada push a `main` y
+publica el sitio estático desde **`site/`**. `site/index.html` y `site/assets/`
+se versionan, así que la demo se actualiza sola al commitear los cambios.
 
 ---
 
@@ -112,12 +131,13 @@ regenerás los mapas, commiteá los cambios para que se actualice la demo).
 
 ```text
 scrape.py                            Scraper Playwright        -> data/raw_results.json
-make_choropleth.py                   Join + render             -> output/*
+make_choropleth.py                   Join + render             -> site/assets/data.js, output/*
+site/                                Sitio estático publicado (HTML/CSS/JS, sin dependencias)
 DISTRITOS_PY_CNPV2022.geojson        Polígonos censales (input)
 test_scrape.py                       Prueba mínima del challenge Sucuri + API
 data/raw_results.json                Datos ya scrapeados (versionados)
-output/                              Generado y versionado (se publica en GitHub Pages)
-.github/workflows/deploy-pages.yml   Publica output/ en GitHub Pages
+output/                              Artefactos generados (PNG, CSV, geojson)
+.github/workflows/deploy-pages.yml   Publica site/ en GitHub Pages
 pyproject.toml / uv.lock             Dependencias (uv)
 ```
 
@@ -187,9 +207,9 @@ portal antes de paralelizar.
   los candidatos en 0), no un bug de parseo.
 - `resumen_partidos.csv` está en UTF-8 **sin BOM**, así que Excel puede mostrar
   mal las `Ñ`. Usá un editor que respete UTF-8, o re-guardá con BOM.
-- `output/mapa_intendentes_2026.html` pesa ~43 MB porque folium embebe toda la
-  geometría censal; por eso conviene simplificar geometría si el historial de git
-  te empieza a molestar.
+- El sitio simplifica la geometría censal (Douglas-Peucker adaptativo) antes de
+  embeberla, así que `site/assets/data.js` pesa ~0,4 MB en lugar de los ~44 MB del
+  geojson original. El geojson enriquecido (~42 MB) se genera pero no se versiona.
 
 ## Licencia
 
