@@ -11,12 +11,15 @@ wheels/
 .venv
 
 # Rendered outputs (reproducible from data/ + the scripts)
+output/distritos_intendentes_2026.geojson
+output/mapa_intendentes_2026.html
 
 # Playwright / MCP artefacts
 .playwright-mcp/
 
 # AI tooling state
 .atl/
+.agents/
 
 # OS noise
 .DS_Store
