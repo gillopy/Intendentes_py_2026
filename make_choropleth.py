@@ -5,7 +5,6 @@ Inputs:
   DISTRITOS_PY_CNPV2022.geojson.txt    (263 census districts)
 
 Outputs:
-  output/distritos_intendentes_2026.geojson   census polygons enriched with winner props
   output/resumen_partidos.csv                 districts won per party
   output/choropleth_intendentes_2026.png      static choropleth (matplotlib)
   site/assets/data.js                         payload + simplified geometry for the static site
@@ -90,6 +89,25 @@ CATEGORIES = {
 
 SITE_DIR = pathlib.Path("site")
 SITE_DATA_PATH = SITE_DIR / "assets" / "data.js"
+
+# A second, vote-based lens: the whole electorate split three ways.
+VOTE_GROUPS = (
+    ("anr", "ANR", "#FF0000"),
+    ("oposicion", "Oposición", "#002BC7"),
+    ("alianzas", "Alianzas", "#9AA0A6"),
+)
+
+
+def vote_group(party: str | None) -> str:
+    if party == "PARTIDO COLORADO":
+        return "anr"
+    if party and (
+        party.startswith("ALIANZA ")
+        or party.startswith("MOVIMIENTO ")
+        or party.startswith("MOV.")
+    ):
+        return "alianzas"
+    return "oposicion"
 
 # Readable short labels for the "all parties" view.
 PARTY_SHORT = {
@@ -522,7 +540,7 @@ def clean_name(value: str | None) -> str | None:
     return value.replace("\ufffd", "Ñ").replace("??", "Ñ")
 
 
-def build_site_payload(collection, scraped: str | None):
+def build_site_payload(collection, records, scraped: str | None):
     """Assemble the JSON payload the static site consumes."""
     features = collection["features"]
     national = {key: 0 for key in CATEGORY_ORDER}
@@ -604,6 +622,38 @@ def build_site_payload(collection, scraped: str | None):
         p["short"] = short_name(p["name"])
         p["pct"] = round(p["count"] / total * 100, 2) if total else 0.0
 
+    # Vote totals by group, summed over every candidate in every district.
+    vote_totals = {key: 0 for key, _, _ in VOTE_GROUPS}
+    won_by_group = {key: 0 for key, _, _ in VOTE_GROUPS}
+    total_candidate_votes = 0
+    for rec in records:
+        cands = rec.get("candidatos") or []
+        winner = None
+        for cand in cands:
+            n = cand.get("votos") or 0
+            total_candidate_votes += n
+            vote_totals[vote_group(cand.get("desPartido"))] += n
+            if winner is None or n > (winner.get("votos") or 0):
+                winner = cand
+        if winner is not None:
+            won_by_group[vote_group(winner.get("desPartido"))] += 1
+    votes = {
+        "total": total_candidate_votes,
+        "groups": [
+            {
+                "key": key,
+                "name": name,
+                "color": color,
+                "votes": vote_totals[key],
+                "pct": round(vote_totals[key] / total_candidate_votes * 100, 2)
+                if total_candidate_votes
+                else 0.0,
+                "districts": won_by_group[key],
+            }
+            for key, name, color in VOTE_GROUPS
+        ],
+    }
+
     return {
         "meta": {
             "total": total,
@@ -616,14 +666,15 @@ def build_site_payload(collection, scraped: str | None):
         "categories": categories,
         "departments": departments,
         "parties": parties,
+        "votes": votes,
         "districts": districts,
     }
 
 
-def write_site_data(collection, scraped: str | None):
+def write_site_data(collection, records, scraped: str | None):
     """Write site/assets/data.js: the payload plus simplified geometry."""
     geo, total_points = build_geo_payload(collection["features"])
-    payload = build_site_payload(collection, scraped)
+    payload = build_site_payload(collection, records, scraped)
     payload["geo"] = geo
     SITE_DATA_PATH.parent.mkdir(parents=True, exist_ok=True)
     text = "window.ELECTION=" + json.dumps(
@@ -646,10 +697,6 @@ def main() -> int:
 
     collection, rows, unmatched_geo, unmatched_tsje = build_feature_collection(records, features)
 
-    OUT_DIR.joinpath("distritos_intendentes_2026.geojson").write_text(
-        json.dumps(collection, ensure_ascii=False), encoding="utf-8"
-    )
-
     df = pd.DataFrame(rows)
     summary = (
         df.groupby("partido")
@@ -669,7 +716,7 @@ def main() -> int:
         except ValueError:
             subtitle = f"Datos TSJE: {scraped}"
     render_png(collection, OUT_DIR / "choropleth_intendentes_2026.png", subtitle=subtitle)
-    write_site_data(collection, scraped)
+    write_site_data(collection, records, scraped)
 
     matched = len(df)
     total = len(features)
