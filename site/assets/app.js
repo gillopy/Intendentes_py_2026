@@ -618,6 +618,47 @@
     bars.appendChild(li);
   });
 
+  /* ---------------------------------------------------------------- votes */
+
+  var votebars = $("#votebars");
+  if (votebars && D.votes) {
+    var vg = D.votes;
+    var vmax = vg.groups.reduce(function (m, g) { return Math.max(m, g.votes); }, 0);
+    vg.groups.forEach(function (g, i) {
+      var li = document.createElement("li");
+      li.className = "votebar";
+      li.style.setProperty("--c", g.color);
+      li.style.setProperty("--i", i);
+      li.style.setProperty("--w", (vmax ? g.votes / vmax : 0).toFixed(4));
+      li.innerHTML =
+        '<span class="votebar-name"><span class="votebar-swatch"></span>' + g.name + "</span>" +
+        '<span class="votebar-track"><span class="votebar-fill"></span></span>' +
+        '<span class="votebar-figure"><b>' + nf.format(g.votes) + "</b><span>" +
+        pct(g.pct) + " de los votos</span></span>";
+      li.addEventListener("pointerenter", function (e) {
+        showTip("<b>" + g.name + '</b><span class="tip-meta">' + nf.format(g.votes) +
+          " votos · " + pct(g.pct) + " · " + g.districts + " distritos ganados</span>",
+          e.clientX, e.clientY);
+      });
+      li.addEventListener("pointermove", function (e) { moveTip(e.clientX, e.clientY); });
+      li.addEventListener("pointerleave", hideTip);
+      votebars.appendChild(li);
+    });
+
+    var anrGroup = vg.groups.filter(function (g) { return g.key === "anr"; })[0];
+    var note = $("#votes-note");
+    if (note && anrGroup) {
+      note.textContent = "Votos obtenidos por cada fuerza en los " + D.meta.total +
+        " distritos. La ANR ganó el " + pct(anrGroup.districts / D.meta.total * 100) +
+        " de los municipios, pero reunió el " + pct(anrGroup.pct) + " de los votos.";
+    }
+    var totalEl = $("#votes-total");
+    if (totalEl) {
+      totalEl.textContent = "Total: " + nf.format(vg.total) +
+        " votos a candidatos a intendente en todo el país.";
+    }
+  }
+
   /* --------------------------------------------------------------- search */
 
   var input = $("#search-input");
@@ -688,7 +729,7 @@
   renderCard(null);
   renderAll();
 
-  var revealTargets = [waffle, bars].concat(
+  var revealTargets = [waffle, bars, votebars].concat(
     Array.prototype.slice.call(document.querySelectorAll("[data-reveal]"))
   );
   function reveal(n) { n.classList.add("is-in"); }
