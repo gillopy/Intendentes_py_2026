@@ -8,15 +8,7 @@ authors = [
 ]
 requires-python = ">=3.13"
 dependencies = [
-    "folium>=0.20.0",
     "matplotlib>=3.11.2",
     "pandas>=3.0.6",
     "playwright>=1.63.0",
 ]
-
-[project.scripts]
-choropleth-py = "choropleth_py:main"
-
-[build-system]
-requires = ["uv_build>=0.12.10,<0.13.0"]
-build-backend = "uv_build"

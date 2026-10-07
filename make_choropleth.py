@@ -4,11 +4,11 @@ Inputs:
   data/raw_results.json                (from scrape.py)
   DISTRITOS_PY_CNPV2022.geojson.txt    (263 census districts)
 
-Outputs (output/):
-  distritos_intendentes_2026.geojson   census polygons enriched with winner props
-  resumen_partidos.csv                 districts won per party
-  choropleth_intendentes_2026.png      static choropleth (matplotlib)
-  mapa_intendentes_2026.html           interactive folium map
+Outputs:
+  output/distritos_intendentes_2026.geojson   census polygons enriched with winner props
+  output/resumen_partidos.csv                 districts won per party
+  output/choropleth_intendentes_2026.png      static choropleth (matplotlib)
+  site/assets/data.js                         payload + simplified geometry for the static site
 
 Two source mismatches are handled explicitly:
   * Department codes are swapped: TSJE 16=ALTO PARAGUAY <-> geojson 17; TSJE
@@ -22,12 +22,12 @@ from __future__ import annotations
 
 import difflib
 import json
+import math
 import pathlib
 import unicodedata
 from collections import defaultdict
 from datetime import datetime, timezone
 
-import folium
 import matplotlib
 
 matplotlib.use("Agg")
@@ -57,6 +57,74 @@ OUT_DIR = pathlib.Path("output")
 
 MATCH_THRESHOLD = 0.60
 DEFAULT_COLOR = "#BDBDBD"
+
+# The published site groups the 40+ winning parties into four readable
+# categories. Colors are the official source colors (from `colLista`).
+CATEGORY_ORDER = ("anr", "plra", "yocreo", "otros")
+CATEGORIES = {
+    "anr": {
+        "short": "ANR",
+        "name": "Partido Colorado",
+        "color": "#FF0000",
+        "parties": {"PARTIDO COLORADO"},
+    },
+    "plra": {
+        "short": "PLRA",
+        "name": "Partido Liberal",
+        "color": "#002BC7",
+        "parties": {"PARTIDO LIBERAL RADICAL AUTENTICO"},
+    },
+    "yocreo": {
+        "short": "Yo Creo",
+        "name": "Partido Yo Creo",
+        "color": "#FFA760",
+        "parties": {"PARTIDO YO CREO CONCIENCIA DEMOCRATICA NACIONAL"},
+    },
+    "otros": {
+        "short": "Alianzas y otros",
+        "name": "Alianzas y movimientos",
+        "color": "#9AA0A6",
+        "parties": set(),
+    },
+}
+
+SITE_DIR = pathlib.Path("site")
+SITE_DATA_PATH = SITE_DIR / "assets" / "data.js"
+
+# Readable short labels for the "all parties" view.
+PARTY_SHORT = {
+    "PARTIDO COLORADO": "ANR",
+    "PARTIDO LIBERAL RADICAL AUTENTICO": "PLRA",
+    "PARTIDO YO CREO CONCIENCIA DEMOCRATICA NACIONAL": "Yo Creo",
+    "PARTIDO ENCUENTRO NACIONAL": "Encuentro Nacional",
+    "PARTIDO DEMOCRATA CRISTIANO": "PDC",
+    "PARTIDO PATRIA SOÑADA": "Patria Soñada",
+}
+NAME_PREFIXES = ("ALIANZA ", "MOVIMIENTO ", "MOV. ", "PARTIDO ")
+NAME_CONNECTORS = {"de", "del", "la", "las", "los", "por", "y", "e", "en", "para", "a", "al", "con", "sin", "el"}
+
+
+def title_es(text: str) -> str:
+    words = text.split()
+    out = []
+    for i, word in enumerate(words):
+        low = word.lower()
+        if i > 0 and low in NAME_CONNECTORS:
+            out.append(low)
+        else:
+            out.append(word[:1].upper() + word[1:].lower())
+    return " ".join(out)
+
+
+def short_name(name: str) -> str:
+    if name in PARTY_SHORT:
+        return PARTY_SHORT[name]
+    stripped = name
+    for prefix in NAME_PREFIXES:
+        if stripped.startswith(prefix):
+            stripped = stripped[len(prefix):]
+            break
+    return title_es(stripped)
 
 # Token abbreviations applied to both sides before scoring.
 ABBR = {
@@ -272,6 +340,7 @@ def build_feature_collection(records, features):
                     "winner_votes": None,
                     "winner_color_hex": DEFAULT_COLOR,
                     "winner_pct": None,
+                    "total_votes": None,
                     "margin_votes": None,
                     "margin_pct": None,
                     "match_score": None,
@@ -291,6 +360,7 @@ def build_feature_collection(records, features):
                     "winner_votes": wv,
                     "winner_color_hex": color_to_hex((winner or {}).get("colLista")),
                     "winner_pct": round(wv / total * 100, 2) if total else None,
+                    "total_votes": total,
                     "margin_votes": wv - rv,
                     "margin_pct": round((wv - rv) / total * 100, 2) if total else None,
                     "match_score": round(match_scores.get(gi, 0.0), 3),
@@ -366,39 +436,204 @@ def render_png(collection, out_path, subtitle=None):
     plt.close(fig)
 
 
-def render_html(collection, out_path):
-    fmap = folium.Map(location=[-23.4, -58.4], zoom_start=6, tiles="CartoDB positron")
+def category_of(party: str | None) -> str:
+    """Map an exact winning-party name to one of the four public categories."""
+    for key in CATEGORY_ORDER:
+        if party and party in CATEGORIES[key]["parties"]:
+            return key
+    return "otros"
 
-    def style(feature):
-        color = feature["properties"].get("winner_color_hex") or DEFAULT_COLOR
-        return {"fillColor": color, "color": "#333333", "weight": 0.4, "fillOpacity": 0.8}
 
-    folium.GeoJson(
-        collection,
-        name="Intendentes 2026",
-        style_function=style,
-        tooltip=folium.GeoJsonTooltip(
-            fields=[
-                "DIST_DESC_",
-                "DPTO_DESC",
-                "winner_party",
-                "winner_candidate",
-                "winner_votes",
-                "winner_pct",
-            ],
-            aliases=[
-                "Distrito",
-                "Departamento",
-                "Partido ganador",
-                "Intendente electo",
-                "Votos",
-                "% votos validos",
-            ],
-            localize=True,
-        ),
-    ).add_to(fmap)
-    folium.LayerControl().add_to(fmap)
-    fmap.save(str(out_path))
+def _ring_diag(ring) -> float:
+    xs = [p[0] for p in ring]
+    ys = [p[1] for p in ring]
+    return math.hypot(max(xs) - min(xs), max(ys) - min(ys))
+
+
+def simplify_ring(points, tol):
+    """Iterative Douglas-Peucker simplification of a list of [x, y] points."""
+    if len(points) < 3:
+        return points
+    keep = [False] * len(points)
+    keep[0] = keep[-1] = True
+    stack = [(0, len(points) - 1)]
+    tol2 = tol * tol
+    while stack:
+        start, end = stack.pop()
+        if end <= start + 1:
+            continue
+        x1, y1 = points[start]
+        x2, y2 = points[end]
+        dx, dy = x2 - x1, y2 - y1
+        seg2 = dx * dx + dy * dy
+        dmax = 0.0
+        idx = -1
+        for i in range(start + 1, end):
+            x, y = points[i]
+            if seg2 == 0.0:
+                d2 = (x - x1) ** 2 + (y - y1) ** 2
+            else:
+                t = ((x - x1) * dx + (y - y1) * dy) / seg2
+                t = 0.0 if t < 0.0 else (1.0 if t > 1.0 else t)
+                px, py = x1 + t * dx, y1 + t * dy
+                d2 = (x - px) ** 2 + (y - py) ** 2
+            if d2 > dmax:
+                dmax = d2
+                idx = i
+        if dmax > tol2 and idx != -1:
+            keep[idx] = True
+            stack.append((start, idx))
+            stack.append((idx, end))
+    return [p for p, k in zip(points, keep) if k]
+
+
+def build_geo_payload(features):
+    """Return ({clave: [ring_flat, ...]}, total_points).
+
+    Geometry stays in lon/lat (the client projects it). Each ring is flattened
+    to [lon, lat, lon, lat, ...] and rounded to 4 decimals (~11 m). The
+    simplification tolerance scales with each ring's bounding-box diagonal, so
+    tiny urban districts keep their detail while large rural ones shed the most.
+    """
+    geo = {}
+    total_points = 0
+    for feat in features:
+        rings_out = []
+        for poly in feat["geometry"]["coordinates"]:
+            for ring in poly:
+                tol = max(0.0008, min(0.004, _ring_diag(ring) * 0.006))
+                simplified = simplify_ring(ring, tol)
+                if len(simplified) < 3:
+                    simplified = ring
+                flat = []
+                for x, y in simplified:
+                    flat.append(round(x, 4))
+                    flat.append(round(y, 4))
+                rings_out.append(flat)
+                total_points += len(simplified)
+        geo[feat["properties"]["CLAVE"]] = rings_out
+    return geo, total_points
+
+
+def clean_name(value: str | None) -> str | None:
+    """Repair the source's broken Ñ (stored as U+FFFD or literal '??')."""
+    if not value:
+        return value
+    return value.replace("\ufffd", "Ñ").replace("??", "Ñ")
+
+
+def build_site_payload(collection, scraped: str | None):
+    """Assemble the JSON payload the static site consumes."""
+    features = collection["features"]
+    national = {key: 0 for key in CATEGORY_ORDER}
+    dept_map: dict[str, dict] = {}
+    districts = []
+
+    for feat in features:
+        props = feat["properties"]
+        party = props.get("winner_party")
+        cat = category_of(party)
+        national[cat] += 1
+        dep_code = props["DPTO"]
+        dep = dept_map.setdefault(
+            dep_code,
+            {
+                "code": dep_code,
+                "name": clean_name(props["DPTO_DESC"]),
+                "total": 0,
+                "counts": {key: 0 for key in CATEGORY_ORDER},
+            },
+        )
+        dep["total"] += 1
+        dep["counts"][cat] += 1
+        districts.append(
+            {
+                "clave": props["CLAVE"],
+                "name": clean_name(props["DIST_DESC_"]),
+                "dpto": dep_code,
+                "dptoName": clean_name(props["DPTO_DESC"]),
+                "cat": cat,
+                "color": props.get("winner_color_hex") or DEFAULT_COLOR,
+                "party": clean_name(party),
+                "candidate": clean_name(props.get("winner_candidate")),
+                "votes": props.get("winner_votes"),
+                "pct": props.get("winner_pct"),
+                "totalVotes": props.get("total_votes"),
+                "marginVotes": props.get("margin_votes"),
+                "marginPct": props.get("margin_pct"),
+            }
+        )
+
+    total = len(districts)
+    categories = []
+    for key in CATEGORY_ORDER:
+        meta = CATEGORIES[key]
+        n = national[key]
+        categories.append(
+            {
+                "key": key,
+                "short": meta["short"],
+                "name": meta["name"],
+                "color": meta["color"],
+                "count": n,
+                "pct": round(n / total * 100, 2) if total else 0.0,
+            }
+        )
+
+    departments = sorted(dept_map.values(), key=lambda d: int(d["code"]))
+    for dep in departments:
+        dep["pct"] = {
+            key: round(dep["counts"][key] / dep["total"] * 100, 2) if dep["total"] else 0.0
+            for key in CATEGORY_ORDER
+        }
+
+    districts.sort(key=lambda d: (int(d["dpto"]), d["name"]))
+
+    # Every winning party / alliance, with its official color.
+    party_map: dict[str, dict] = {}
+    for d in districts:
+        name = d["party"]
+        if not name:
+            continue
+        entry = party_map.setdefault(
+            name, {"name": name, "color": d["color"], "count": 0}
+        )
+        entry["count"] += 1
+    parties = sorted(party_map.values(), key=lambda p: (-p["count"], p["name"]))
+    for p in parties:
+        p["short"] = short_name(p["name"])
+        p["pct"] = round(p["count"] / total * 100, 2) if total else 0.0
+
+    return {
+        "meta": {
+            "total": total,
+            "departments": len(departments),
+            "scrapedAt": scraped,
+            "generatedAt": datetime.now(timezone.utc).isoformat(),
+            "source": "TSJE · Elecciones Municipales 2026",
+            "mapSource": "CNPV2022",
+        },
+        "categories": categories,
+        "departments": departments,
+        "parties": parties,
+        "districts": districts,
+    }
+
+
+def write_site_data(collection, scraped: str | None):
+    """Write site/assets/data.js: the payload plus simplified geometry."""
+    geo, total_points = build_geo_payload(collection["features"])
+    payload = build_site_payload(collection, scraped)
+    payload["geo"] = geo
+    SITE_DATA_PATH.parent.mkdir(parents=True, exist_ok=True)
+    text = "window.ELECTION=" + json.dumps(
+        payload, ensure_ascii=False, separators=(",", ":")
+    ) + ";"
+    SITE_DATA_PATH.write_text(text, encoding="utf-8")
+    print(
+        f"[site] {SITE_DATA_PATH.as_posix()} written: "
+        f"{len(text) / 1024:.0f} KB, {total_points} geometry points"
+    )
 
 
 def main() -> int:
@@ -434,7 +669,7 @@ def main() -> int:
         except ValueError:
             subtitle = f"Datos TSJE: {scraped}"
     render_png(collection, OUT_DIR / "choropleth_intendentes_2026.png", subtitle=subtitle)
-    render_html(collection, OUT_DIR / "mapa_intendentes_2026.html")
+    write_site_data(collection, scraped)
 
     matched = len(df)
     total = len(features)
