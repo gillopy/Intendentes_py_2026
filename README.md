@@ -97,6 +97,7 @@ Playwright es el motor que abre el navegador, pasa el firewall y ejecuta los
 | `output/resumen_partidos.csv` | Distritos ganados por partido (conteo + %) |
 | `data/raw_results.json` | Scrape crudo: candidatos, ganador y totales por distrito |
 | `data/asuncion_2026/asuncion.json` | Datos de Asunción 2021→2026 (barrios, locales, zonas, fuerzas, correlaciones) |
+| `data/asuncion_2026/asuncion_geo.json` | Barrios, distrito y vías de Asunción (simplificados, para los mapas) |
 | `site/assets/asuncion-data.js` | Bundle `window.ASUNCION` que consume la sección Asunción (generado) |
 
 ---
@@ -141,6 +142,7 @@ reporte con Playwright, **re-emite sus propias consultas al endpoint público
 
 ```powershell
 uv run python tools/asuncion_scrape.py      # refresca data/asuncion_2026/asuncion.json
+uv run python tools/asuncion_geo.py         # regenera los mapas (asuncion_geo.json)
 uv run python make_asuncion.py              # regenera site/assets/asuncion-data.js
 ```
 
@@ -156,9 +158,12 @@ alcanza con `make_asuncion.py`. Qué incluye cada vista:
   y tabla de los 145 locales.
 - **Correlaciones** — matriz de Pearson 5×5 + dispersión pobreza ↔ voto JA.
 
-> Pendiente (follow-up): el mapa de barrios del reporte es un coroplético; acá se
-> muestra como grid porque no tenemos los polígonos de barrio. Se puede sumar
-> trayendo límites de barrio (p. ej. OpenStreetMap).
+Los límites de barrio (y el contorno del distrito y las vías principales) salen del
+material municipal en `data/asuncion_2026/source/` (barrios/distrito/vías): con eso
+el mapa de barrios es un **coroplético real** (2021 y 2026) y el mapa de locales
+dibuja los barrios de base debajo de los 145 puntos. Las tablas son interactivas:
+al tocar una zona, un barrio o un local se filtran los gráficos (y el resumen pasa
+a mostrar esa zona).
 
 ---
 

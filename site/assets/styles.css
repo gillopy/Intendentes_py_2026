@@ -1040,3 +1040,108 @@ button { font: inherit; color: inherit; }
   .asun-ql li span { padding-left: 0; }
   .asun-cell { width: 20px; height: 20px; }
 }
+
+/* ------------------------------------- asunción filtros, mapas y resultado */
+
+.asun-filterchip {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem 0.75rem;
+  margin: -0.5rem 0 1.5rem;
+}
+.asun-filterchip[hidden] { display: none; }
+.asun-filterchip-label {
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: var(--ink-2);
+}
+.asun-filterchip-btn {
+  border: 1px solid var(--rule-2);
+  background: var(--paper);
+  border-radius: 999px;
+  padding: 0.3rem 0.8rem;
+  font-size: 0.78rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background 0.15s ease, border-color 0.15s ease;
+}
+.asun-filterchip-btn:hover { background: var(--ground); border-color: var(--ink-3); }
+
+/* 2026 result card */
+
+.asun-result-winner { font-size: 1rem; font-weight: 700; line-height: 1.5; }
+.asun-result-winner b { font-weight: 900; }
+.asun-result-name { font-weight: 800; }
+.asun-result-party { color: var(--ink-2); }
+.asun-result-votes { color: var(--ink-3); font-weight: 600; }
+.asun-result-cands { display: grid; gap: 0.55rem; margin-top: 1rem; max-width: 640px; }
+.asun-rcand {
+  display: grid;
+  grid-template-columns: 14px minmax(0, 1fr) auto;
+  column-gap: 0.6rem;
+  row-gap: 0.1rem;
+  align-items: center;
+  font-size: 0.82rem;
+}
+.asun-rcand-sw {
+  grid-row: 1 / span 2;
+  grid-column: 1;
+  width: 14px;
+  height: 14px;
+  border-radius: 3px;
+  border: 1px solid rgba(0, 0, 0, 0.18);
+}
+.asun-rcand-name { grid-row: 1; grid-column: 2; font-weight: 700; }
+.asun-rcand-party { grid-row: 2; grid-column: 2; color: var(--ink-3); font-size: 0.76rem; }
+.asun-rcand-votes { grid-row: 1; grid-column: 3; text-align: right; font-weight: 600; }
+.asun-rcand-pct { grid-row: 2; grid-column: 3; text-align: right; font-weight: 800; }
+
+/* barrio choropleth maps */
+
+.asun-winner-col svg { display: block; width: 100%; height: auto; }
+.asun-poly {
+  stroke: rgba(0, 0, 0, 0.14);
+  stroke-width: 0.6;
+  cursor: pointer;
+  transition: stroke 0.12s ease, stroke-width 0.12s ease;
+}
+.asun-poly:hover { stroke: var(--ink); stroke-width: 1.4; }
+.asun-poly.is-selected { stroke: var(--ink); stroke-width: 2.4; }
+.asun-base {
+  fill: rgba(12, 12, 13, 0.035);
+  stroke: var(--rule-2);
+  stroke-width: 0.5;
+  pointer-events: none;
+}
+.asun-district {
+  fill: none;
+  stroke: var(--ink-3);
+  stroke-width: 0.9;
+  pointer-events: none;
+}
+.asun-map-note[hidden] { display: none; }
+
+/* long force tags (JA row: two year-specific names next to the bars) */
+.asun-fbar.is-long-tag {
+  grid-template-columns: minmax(0, 1fr) 4.2rem;
+  grid-template-rows: auto auto;
+  row-gap: 2px;
+}
+.asun-fbar.is-long-tag .asun-fbar-tag { grid-column: 1 / -1; grid-row: 1; white-space: normal; line-height: 1.15; }
+.asun-fbar.is-long-tag .asun-fbar-track { grid-column: 1; grid-row: 2; }
+.asun-fbar.is-long-tag .asun-fbar-val { grid-column: 2; grid-row: 2; }
+
+.asun-dot.is-selected { stroke: var(--ink); stroke-width: 2.2; }
+.asun-map-legend .asun-dotkey { border: 1px solid rgba(0, 0, 0, 0.12); }
+
+/* interactive selections */
+
+.asun-zonebar.is-clickable { cursor: pointer; border-radius: 6px; }
+.asun-zonebar.is-clickable:hover { background: var(--ground); }
+.asun-zonebar.is-selected { background: var(--ground); box-shadow: inset 3px 0 0 var(--ink); }
+.asun-zonebar.is-selected .asun-zonebar-name { color: var(--ink); }
+
+.asun-table tr.is-clickable { cursor: pointer; }
+.asun-table tbody tr.is-selected td { background: rgba(0, 43, 199, 0.12); }
+.asun-table tbody tr.is-selected:hover td { background: rgba(0, 43, 199, 0.16); }
