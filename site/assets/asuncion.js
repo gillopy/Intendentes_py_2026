@@ -454,9 +454,18 @@
       b.setAttribute("aria-selected", on ? "true" : "false");
       panels[j].hidden = !on;
     });
-    if (!built[i]) { TABS[i].build(panels[i]); built[i] = true; }
+    if (!built[i]) {
+      try {
+        TABS[i].build(panels[i]);
+        built[i] = true;
+      } catch (err) {
+        console.error("[asuncion] failed to build tab " + TABS[i].id, err);
+        panels[i].appendChild(elT("p", "asun-cap", "No se pudo construir esta vista."));
+        built[i] = true;
+      }
+    }
   }
-  select(0);
+  try { select(0); } catch (err) { console.error("[asuncion] init failed", err); }
 
   /* ------------------------------------------------------------- 1. Resumen */
 
