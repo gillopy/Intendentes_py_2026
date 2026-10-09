@@ -28,3 +28,6 @@ skills-lock.json
 # OS noise
 .DS_Store
 Thumbs.db
+
+# Local shapefile input (superseded by data/asuncion_2026/source/*.geojson)
+BARRIOS_ASU.shp
