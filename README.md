@@ -96,6 +96,8 @@ Playwright es el motor que abre el navegador, pasa el firewall y ejecuta los
 | `output/choropleth_intendentes_2026.png` | Mapa estático (matplotlib) pintado por color del ganador + leyenda |
 | `output/resumen_partidos.csv` | Distritos ganados por partido (conteo + %) |
 | `data/raw_results.json` | Scrape crudo: candidatos, ganador y totales por distrito |
+| `data/asuncion_2026/asuncion.json` | Datos de Asunción 2021→2026 (barrios, locales, zonas, fuerzas, correlaciones) |
+| `site/assets/asuncion-data.js` | Bundle `window.ASUNCION` que consume la sección Asunción (generado) |
 
 ---
 
@@ -111,12 +113,52 @@ tipografía vendorizada) que se abre directo desde el disco o se publica en Page
 - **Votos por fuerza** (ANR / Oposición / Alianzas): la ANR ganó el 71% de los
   municipios pero reunió ~53% de los votos.
 - Toggle **4 categorías / Todos los partidos** (color oficial de las 42 fuerzas).
+- **Asunción 2021 → 2026**: una sección con cinco vistas (Resumen, Zonas, Barrios,
+  Locales, Correlaciones) que replica el reporte público de Power BI sobre la
+  intendencia de la capital — KPIs, giro del voto por zona y barrio, mapa de los
+  145 locales de votación y correlaciones con el censo 2022.
 
 Se abre sin servidor: `site/index.html`. Para servirlo local:
 
 ```powershell
 uv run python -m http.server 8123 --directory site
 ```
+
+---
+
+## 🏙️ Sección Asunción (2021 → 2026)
+
+Además del mapa nacional, el sitio incluye un análisis de la **intendencia de
+Asunción** que replica el reporte público de Power BI
+["Elecciones Intendencia Asunción 2026"](https://app.powerbi.com/view?r=eyJrIjoiMmY4ZGNhMjAtNWQ3My00YjY2LWFjYTAtMDM2YzJmZmM4Y2I1IiwidCI6IjY4YTNkMjFhLTg4NzEtNDAxZC1hYTA0LTBjMmJiMDc0NjQxYiJ9):
+voto 2021 vs 2026 por zona (5), por barrio (59) y por local de votación (145),
+más correlaciones entre indicadores electorales y del censo 2022 (INE).
+
+El reporte no permite exportar, así que `tools/asuncion_scrape.py` abre el
+reporte con Playwright, **re-emite sus propias consultas al endpoint público
+`querydata`** del modelo semántico y decodifica el formato **DSR** de Power BI
+(incluido el bitmask `R` de celdas repetidas). Es reproducible:
+
+```powershell
+uv run python tools/asuncion_scrape.py      # refresca data/asuncion_2026/asuncion.json
+uv run python make_asuncion.py              # regenera site/assets/asuncion-data.js
+```
+
+Los datos ya extraídos están versionados, así que para solo reconstruir el sitio
+alcanza con `make_asuncion.py`. Qué incluye cada vista:
+
+- **Resumen** — KPIs (ANR 46,0 % · JA 47,8 % · margen −1,8 pp · participación 61,7 %),
+  % de votos por fuerza 2021/2026 y el relato del giro.
+- **Zonas** — Margen ANR−JA por zona (barras divergentes) + tabla.
+- **Barrios** — grids de ganador 2021/2026 y tabla ordenada por giro (marca los
+  barrios que cambiaron de signo).
+- **Locales** — mapa de puntos (lat/lon reales, tamaño = votos 2026, color = giro)
+  y tabla de los 145 locales.
+- **Correlaciones** — matriz de Pearson 5×5 + dispersión pobreza ↔ voto JA.
+
+> Pendiente (follow-up): el mapa de barrios del reporte es un coroplético; acá se
+> muestra como grid porque no tenemos los polígonos de barrio. Se puede sumar
+> trayendo límites de barrio (p. ej. OpenStreetMap).
 
 ---
 
@@ -137,6 +179,9 @@ site/                                Sitio estático publicado (HTML/CSS/JS, sin
 DISTRITOS_PY_CNPV2022.geojson        Polígonos censales (input)
 test_scrape.py                       Prueba mínima del challenge Sucuri + API
 data/raw_results.json                Datos ya scrapeados (versionados)
+data/asuncion_2026/asuncion.json     Datos Asunción 2021→2026 (versionados)
+make_asuncion.py                     Bundle Asunción          -> site/assets/asuncion-data.js
+tools/asuncion_scrape.py             Extrae el reporte Power BI de Asunción
 output/                              Artefactos generados (PNG, CSV, geojson)
 .github/workflows/deploy-pages.yml   Publica site/ en GitHub Pages
 pyproject.toml / uv.lock             Dependencias (uv)
