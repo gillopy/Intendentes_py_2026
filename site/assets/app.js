@@ -410,13 +410,11 @@
   function renderDonut() {
     var donut = $("#donut");
     donut.innerHTML = "";
-    var items = mode === "cat"
-      ? D.categories.map(function (c) {
-          return { key: c.key, color: c.color, count: c.count, short: c.short, pct: c.pct };
-        })
-      : D.parties.map(function (p) {
-          return { key: p.name, color: p.color, count: p.count, short: p.short, pct: p.pct };
-        });
+    // The donut always shows the four categories: 42-party arcs are an
+    // unreadable red blob, and party detail lives in the map sidebar legend.
+    var items = D.categories.map(function (c) {
+      return { key: c.key, color: c.color, count: c.count, short: c.short, pct: c.pct };
+    });
     var total = D.meta.total;
     var size = 100, stroke = 15, r = (size - stroke) / 2, cx = size / 2, cy = size / 2;
     var C = 2 * Math.PI * r;
@@ -501,13 +499,16 @@
       D.categories.forEach(function (c) { mapLeg.appendChild(legendRow(catItem(c))); });
       return;
     }
-    var list = mapLegendExpanded ? D.parties : D.parties.slice(0, 10);
-    list.forEach(function (p) { mapLeg.appendChild(legendRow(partyItem(p))); });
+    // Always render the first ten rows inline; the remaining parties open in a
+    // bounded, absolutely-positioned dropdown that overlays without resizing
+    // the sidebar (see .legend-dropdown in styles.css).
+    D.parties.slice(0, 10).forEach(function (p) { mapLeg.appendChild(legendRow(partyItem(p))); });
     if (D.parties.length > 10) {
-      var li = document.createElement("li");
-      li.className = "legend-toggle";
+      var wrap = document.createElement("li");
+      wrap.className = "legend-toggle";
       var btn = document.createElement("button");
       btn.type = "button";
+      btn.setAttribute("aria-expanded", mapLegendExpanded ? "true" : "false");
       btn.textContent = mapLegendExpanded
         ? "Ver menos"
         : "Ver los " + D.parties.length + " partidos";
@@ -515,23 +516,34 @@
         mapLegendExpanded = !mapLegendExpanded;
         renderMapLegend();
       });
-      li.appendChild(btn);
-      mapLeg.appendChild(li);
+      wrap.appendChild(btn);
+      if (mapLegendExpanded) {
+        var dd = document.createElement("ul");
+        dd.className = "legend-dropdown";
+        D.parties.slice(10).forEach(function (p) { dd.appendChild(legendRow(partyItem(p))); });
+        wrap.appendChild(dd);
+      }
+      mapLeg.appendChild(wrap);
     }
   }
 
   function renderLegends() {
+    // The full legend next to the donut always mirrors the donut: four
+    // categories in both modes. Party detail stays in the map sidebar legend.
     var full = $("#legend");
     full.innerHTML = "";
-    if (mode === "cat") {
-      full.classList.remove("legend--many");
-      D.categories.forEach(function (c) { full.appendChild(legendRow(catItem(c))); });
-    } else {
-      full.classList.add("legend--many");
-      D.parties.forEach(function (p) { full.appendChild(legendRow(partyItem(p))); });
-    }
+    full.classList.remove("legend--many");
+    D.categories.forEach(function (c) { full.appendChild(legendRow(catItem(c))); });
     renderMapLegend();
   }
+
+  // Close the party dropdown when the click lands outside the toggle.
+  document.addEventListener("click", function (e) {
+    if (!mapLegendExpanded) return;
+    if (e.target.closest && e.target.closest(".legend-toggle")) return;
+    mapLegendExpanded = false;
+    renderMapLegend();
+  });
 
   // The department bars stay on the four categories: 42-color bars are unreadable.
   var barsLegend = $("#bars-legend");

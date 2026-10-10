@@ -23,9 +23,9 @@
   var JA = "var(--plra)";
 
   /* Full labels for the force siglas (Change 1). Code identifiers stay ANR/JA.
-     JA is year-dependent: in 2021 the Asunción opposition ran as "Juntos x
-     Asunción", but in 2026 the alliance is categorized as "Alianzas y otros".
-     When no year is given, the 2026 label is used (the section's frame). */
+     The JA force is the same alliance in both years: its real 2026 name is
+     "Juntos por Asunción" (candidate SOLE NUÑEZ). The 2021/2026 labels are kept
+     as separate identifiers so call sites can stay year-aware. */
   var FORCE_LABELS = {
     ANR: "Partido Colorado",
     PDC: "Partido Demócrata Cristiano",
@@ -33,8 +33,8 @@
     "B/N": "Blancos y nulos",
     APT: "APT",
   };
-  var JA_2021 = "Juntos x Asunción";
-  var JA_2026 = "Alianzas y otros";
+  var JA_2021 = "Juntos por Asunción";
+  var JA_2026 = "Juntos por Asunción";
   var FORCE_TITLES = { APT: "Sigla del reporte original (APT)" };
 
   function forceLabel(sigla, year) {
@@ -59,9 +59,15 @@
     if (x == null) return "s/d";
     return n1(x * 100) + " %";
   }
+  /* Chart labels/tooltips carry the unit; table cells use ppNum when the
+     column header already names it. "puntos" = puntos porcentuales. */
   function pp1(x) {
     if (x == null) return "s/d";
-    return (x < 0 ? MINUS : "+") + n1(Math.abs(x)) + " pp";
+    return (x < 0 ? MINUS : "+") + n1(Math.abs(x)) + " puntos";
+  }
+  function ppNum(x) {
+    if (x == null) return "s/d";
+    return (x < 0 ? MINUS : "+") + n1(Math.abs(x));
   }
   function r2(x) {
     return Number(x).toLocaleString("es-PY", {
@@ -181,7 +187,17 @@
     var thead = el("thead");
     var htr = el("tr");
     headers.forEach(function (h) {
-      htr.appendChild(elH("th", (h.cls || "") + (h.text ? " is-text" : ""), h.label));
+      var th = elH("th", (h.cls || "") + (h.text ? " is-text" : ""), h.label);
+      if (h.onClick) {
+        th.classList.add("is-sortable");
+        th.tabIndex = 0;
+        th.setAttribute("role", "button");
+        th.addEventListener("click", h.onClick);
+        th.addEventListener("keydown", function (e) {
+          if (e.key === "Enter" || e.key === " ") { e.preventDefault(); h.onClick(); }
+        });
+      }
+      htr.appendChild(th);
     });
     thead.appendChild(htr);
     t.appendChild(thead);
@@ -318,6 +334,15 @@
   var applying = false;
   var renderers = [];
 
+  /* Which metric drives the zonas chart and table sort. "margen" is the
+     default (two diverging bars per zone, table sorted by giro); the numeric
+     column headers switch it to a percent metric or the single "giro" bar. */
+  var zoneMetric = "margen";
+  function setZoneMetric(metric) {
+    zoneMetric = metric;
+    applyFilter();
+  }
+
   function registerRenderer(fn) { renderers.push(fn); return fn; }
 
   function applyFilter() {
@@ -340,12 +365,13 @@
     applyFilter();
   }
 
+  /* Toggle the barrio highlight only. It must NOT scope the map to the barrio's
+     zone (that used to drop every other polygon); the map dims instead. */
   function setBarrio(barrio, zona) {
     if (filter.barrio === barrio) {
       filter.barrio = null;
     } else {
       filter.barrio = barrio;
-      filter.zona = zona || (BY_BARRIO[barrio] && BY_BARRIO[barrio].zona) || filter.zona;
     }
     applyFilter();
   }
@@ -374,8 +400,10 @@
 
   function scopedScatterPts() {
     return DATA.barrios.filter(function (b) {
-      return b.pobreza != null && b.ja26 != null && b.votos26 != null &&
-        (!filter.zona || b.zona === filter.zona);
+      if (b.pobreza == null || b.ja26 == null || b.votos26 == null) return false;
+      if (filter.zona && b.zona !== filter.zona) return false;
+      if (filter.barrio && b.barrio !== filter.barrio) return false;
+      return true;
     });
   }
 
@@ -419,8 +447,10 @@
   chip.hidden = true;
 
   root.appendChild(bar);
-  root.appendChild(chip);
   panels.forEach(function (p) { root.appendChild(p); });
+  // The active-filter chip lives at the very end so showing it never pushes
+  // the chart down when a zone/barrio is selected.
+  root.appendChild(chip);
 
   function updateChip() {
     if (!filter.zona && !filter.barrio) { chip.hidden = true; return; }
@@ -483,7 +513,7 @@
     var k = DATA.kpis;
     var anr = forceLabel("ANR");
     var ja26 = forceLabel("JA", 2026);
-    /* Baseline comment for the JA/opposition card: 2021 ran as Juntos x Asunción. */
+    /* Baseline comment for the JA/opposition card: the 2021 JA share. */
     function jaBase(v) {
       return "2021: " + pct1(v) + " " + forceLabel("JA", 2021);
     }
@@ -510,13 +540,16 @@
     }
   }
 
-  function fuerzaBar(tag, v, max, color, long) {
-    var row = el("div", "asun-fbar" + (long ? " is-long-tag" : ""));
+  /* A true 0-100 % scale: `v` is a fraction, so the fill is v * 100 wide (with
+     a small floor so tiny shares stay visible). Every row shares the same
+     tag/track/value columns. */
+  function fuerzaBar(tag, v, color) {
+    var row = el("div", "asun-fbar");
     row.appendChild(elT("span", "asun-fbar-tag", tag));
     var track = el("div", "asun-fbar-track");
     var fill = el("span", "asun-fbar-fill");
     fill.style.background = color;
-    fill.style.width = v == null ? "0" : Math.max(v / max, 0.012) * 100 + "%";
+    fill.style.width = v == null ? "0" : Math.max(v * 100, 1.2) + "%";
     track.appendChild(fill);
     row.appendChild(track);
     row.appendChild(elT("span", "asun-fbar-val", v == null ? "s/d" : pct1(v)));
@@ -526,12 +559,6 @@
 
   function buildFuerzas() {
     var list = DATA.fuerzas.slice();
-    var max = 0;
-    list.forEach(function (f) {
-      if (f.p21 != null) max = Math.max(max, f.p21);
-      if (f.p26 != null) max = Math.max(max, f.p26);
-    });
-    max = max || 1;
 
     var box = el("div", "asun-block");
     box.appendChild(elT("p", "asun-subhead", "% de votos por fuerza política"));
@@ -542,13 +569,8 @@
       if (FORCE_TITLES[f.sigla]) name.title = FORCE_TITLES[f.sigla];
       row.appendChild(name);
       var plot = el("div", "asun-fuerza-plot");
-      /* JA changed name across years: tag each of its bars with the
-         year-specific force name instead of a bare year. */
-      var isJA = f.sigla === "JA";
-      plot.appendChild(fuerzaBar(
-        isJA ? "2021 · " + forceLabel("JA", 2021) : "2021", f.p21, max, "var(--otros)", isJA));
-      plot.appendChild(fuerzaBar(
-        isJA ? "2026 · " + forceLabel("JA", 2026) : "2026", f.p26, max, "var(--ink)", isJA));
+      plot.appendChild(fuerzaBar("2021", f.p21, "var(--otros)"));
+      plot.appendChild(fuerzaBar("2026", f.p26, "var(--ink)"));
       row.appendChild(plot);
       grid.appendChild(row);
     });
@@ -656,21 +678,84 @@
     return row;
   }
 
+  /* Left-anchored bar on a true 0-100 % scale (v is a fraction). Used by the
+     percent-metric charts: 2021 gray, 2026 ink. */
+  function pctBar(tag, v, color) {
+    var row = el("div", "asun-dbar asun-dbar--pct");
+    row.appendChild(elT("span", "asun-dbar-tag", tag));
+    var track = el("div", "asun-dbar-track");
+    var fill = el("span", "asun-dbar-fill");
+    if (v == null) {
+      fill.style.width = "0";
+    } else {
+      fill.style.left = "0";
+      fill.style.width = Math.max(v * 100, 0.6) + "%";
+      fill.style.background = color;
+    }
+    track.appendChild(fill);
+    row.appendChild(track);
+    row.appendChild(elT("span", "asun-dbar-val", v == null ? "s/d" : pct1(v)));
+    return row;
+  }
+
+  /* Chart subhead mirrors the active metric. */
+  function zoneSubhead() {
+    var anr = forceLabel("ANR");
+    if (zoneMetric === "margen") {
+      return "Margen " + anr + " " + MINUS + " " + forceLabel("JA", 2026) + " por zona (puntos)";
+    }
+    if (zoneMetric === "giro") {
+      return "Giro del margen 2021 → 2026 por zona (puntos)";
+    }
+    var ind = zoneMetric.replace(/\d+$/, "");
+    var year = "20" + zoneMetric.slice(-2);
+    if (ind === "part") return "Participación " + year + " por zona (% del padrón)";
+    var name = ind === "anr" ? anr : forceLabel("JA", Number(year));
+    return name + " " + year + " por zona (% de válidos)";
+  }
+
+  /* Which 2021/2026 columns each percent header maps to. */
+  var PCT_PAIRS = {
+    anr21: ["anr21", "anr26"], anr26: ["anr21", "anr26"],
+    ja21: ["ja21", "ja26"], ja26: ["ja21", "ja26"],
+    part21: ["part21", "part26"], part26: ["part21", "part26"],
+  };
+
+  function sortedZonas() {
+    var zonas = DATA.zonas.slice();
+    if (zoneMetric === "margen" || zoneMetric === "giro") return zonas.sort(byGiroAsc);
+    return zonas.sort(function (a, b) {
+      return (b[zoneMetric] || 0) - (a[zoneMetric] || 0);
+    });
+  }
+
   function renderZoneBars(host) {
     clear(host);
-    var zonas = DATA.zonas.slice().sort(byGiroAsc);
-    var scale = Math.max(
-      maxOf(zonas, function (z) { return Math.abs(z.margen21); }),
-      maxOf(zonas, function (z) { return Math.abs(z.margen26); })
-    ) || 1;
+    var scale = 1;
+    if (zoneMetric === "margen") {
+      scale = Math.max(
+        maxOf(DATA.zonas, function (o) { return Math.abs(o.margen21); }),
+        maxOf(DATA.zonas, function (o) { return Math.abs(o.margen26); })
+      ) || 1;
+    } else if (zoneMetric === "giro") {
+      scale = maxOf(DATA.zonas, function (o) { return Math.abs(o.giro); }) || 1;
+    }
+    var pair = PCT_PAIRS[zoneMetric];
 
-    zonas.forEach(function (z) {
+    sortedZonas().forEach(function (z) {
       var row = el("div", "asun-zonebar is-clickable" +
         (filter.zona === z.zona ? " is-selected" : ""));
       row.appendChild(elT("div", "asun-zonebar-name", z.zona));
       var plot = el("div", "asun-zonebar-plot");
-      plot.appendChild(dbar("2021", z.margen21, scale));
-      plot.appendChild(dbar("2026", z.margen26, scale));
+      if (zoneMetric === "margen") {
+        plot.appendChild(dbar("2021", z.margen21, scale));
+        plot.appendChild(dbar("2026", z.margen26, scale));
+      } else if (zoneMetric === "giro") {
+        plot.appendChild(dbar("2021→2026", z.giro, scale));
+      } else {
+        plot.appendChild(pctBar("2021", z[pair[0]], "var(--otros)"));
+        plot.appendChild(pctBar("2026", z[pair[1]], "var(--ink)"));
+      }
       row.appendChild(plot);
       row.tabIndex = 0;
       row.setAttribute("role", "button");
@@ -684,10 +769,10 @@
 
   function renderZonasTable(host) {
     clear(host);
-    var zonas = DATA.zonas.slice().sort(byGiroAsc);
     var anr = forceLabel("ANR");
     var ja21 = forceLabel("JA", 2021), ja26 = forceLabel("JA", 2026);
-    var rows = zonas.map(function (z) {
+    function hcls(m) { return m === zoneMetric ? "is-active" : ""; }
+    var rows = sortedZonas().map(function (z) {
       return {
         cls: "asun-zone-row" + (filter.zona === z.zona ? " is-selected" : ""),
         onClick: function () { toggleZona(z.zona); },
@@ -696,23 +781,26 @@
           pct1(z.anr21), pct1(z.anr26),
           pct1(z.ja21), pct1(z.ja26),
           pct1(z.part21), pct1(z.part26),
-          pp1(z.giro),
+          ppNum(z.giro),
         ],
       };
     });
     host.appendChild(makeTable([
       { label: "Zona", text: true },
-      { label: anr + " 2021" }, { label: anr + " 2026" },
-      { label: ja21 + " 2021" }, { label: ja26 + " 2026" },
-      { label: "Particip. 2021" }, { label: "Particip. 2026" },
-      { label: "Giro (pp)" },
+      { label: anr + " 2021", cls: hcls("anr21"), onClick: function () { setZoneMetric("anr21"); } },
+      { label: anr + " 2026", cls: hcls("anr26"), onClick: function () { setZoneMetric("anr26"); } },
+      { label: ja21 + " 2021", cls: hcls("ja21"), onClick: function () { setZoneMetric("ja21"); } },
+      { label: ja26 + " 2026", cls: hcls("ja26"), onClick: function () { setZoneMetric("ja26"); } },
+      { label: "Particip. 2021", cls: hcls("part21"), onClick: function () { setZoneMetric("part21"); } },
+      { label: "Particip. 2026", cls: hcls("part26"), onClick: function () { setZoneMetric("part26"); } },
+      { label: "Giro (puntos)", cls: hcls("giro"), onClick: function () { setZoneMetric("giro"); } },
     ], rows));
   }
 
   function buildZonas(panel) {
     var box = el("div", "asun-block");
-    box.appendChild(elT("p", "asun-subhead",
-      "Margen " + forceLabel("ANR") + " " + MINUS + " " + forceLabel("JA", 2026) + " por zona (pp)"));
+    var subhead = elT("p", "asun-subhead", zoneSubhead());
+    box.appendChild(subhead);
     var barsHost = el("div", "asun-zonebars");
     box.appendChild(barsHost);
     box.appendChild(elT("p", "asun-cap",
@@ -720,11 +808,41 @@
       " · Azul = ventaja " + forceLabel("JA", 2026) + ". La línea central es empate."));
     panel.appendChild(box);
 
+    // The zone filter lives BELOW the chart and its caption so using it never
+    // pushes the chart down.
+    var filterWrap = el("div", "asun-zfilter-wrap");
+    var zlabel = elT("label", "asun-zfilter-label", "Filtrar por zona");
+    zlabel.setAttribute("for", "asun-zfilter");
+    var zselect = el("select", "asun-zfilter");
+    zselect.id = "asun-zfilter";
+    var optAll = elT("option", "", "Todas las zonas");
+    optAll.value = "";
+    zselect.appendChild(optAll);
+    DATA.zonas.forEach(function (z) {
+      var o = elT("option", "", z.zona);
+      o.value = z.zona;
+      zselect.appendChild(o);
+    });
+    zselect.value = filter.zona || "";
+    zselect.addEventListener("change", function () {
+      filter.zona = zselect.value || null;
+      filter.barrio = null;
+      applyFilter();
+    });
+    filterWrap.appendChild(zlabel);
+    filterWrap.appendChild(zselect);
+    panel.appendChild(filterWrap);
+
     var tableHost = el("div");
     panel.appendChild(tableHost);
+    panel.appendChild(elT("p", "asun-note asun-pp-note", "puntos = puntos porcentuales."));
 
-    registerRenderer(function () { renderZoneBars(barsHost); });
+    registerRenderer(function () {
+      subhead.textContent = zoneSubhead();
+      renderZoneBars(barsHost);
+    });
     registerRenderer(function () { renderZonasTable(tableHost); });
+    registerRenderer(function () { zselect.value = filter.zona || ""; });
     renderZoneBars(barsHost);
     renderZonasTable(tableHost);
   }
@@ -744,22 +862,31 @@
       if (!f.barrio) return;
       var rec = BY_BARRIO[f.barrio];
       if (!rec) return;
-      if (filter.zona && rec.zona !== filter.zona) return;
       var w = year === 2021 ? rec.win21 : rec.win26;
       var m = year === 2021 ? rec.margen21 : rec.margen26;
-      if (!isWinner(w) || m == null) return;
+      var hasWinner = isWinner(w) && m != null;
 
       var path = svg("path", {
         d: polysPath(f.polys, PROJECTOR), "fill-rule": "evenodd", class: "asun-poly",
       });
-      /* Intensity by min(|margen|, 50) / 50. */
-      path.style.fill = divColor(m, 50, 0);
+      /* Intensity by min(|margen|, 50) / 50; a barrio with no winner this year
+         stays neutral rather than vanishing. */
+      path.style.fill = hasWinner ? divColor(m, 50, 0) : "var(--rule)";
       path.setAttribute("role", "button");
       path.setAttribute("tabindex", "0");
       var t = svg("title");
-      t.textContent = rec.barrio + " · " + forceLabel(w, year) + " · margen " + pp1(m);
+      t.textContent = hasWinner
+        ? rec.barrio + " · " + forceLabel(w, year) + " · margen " + pp1(m)
+        : rec.barrio + " · sin ganador registrado en " + year;
       path.appendChild(t);
-      if (filter.barrio === rec.barrio) path.classList.add("is-selected");
+      /* Highlight, never hide: the whole map stays visible; the selection is
+         stroked and everything else is dimmed. Dimmed polys keep pointer
+         events and still toggle selection. */
+      if (filter.barrio) {
+        path.classList.add(filter.barrio === rec.barrio ? "is-selected" : "is-dim");
+      } else if (filter.zona && rec.zona !== filter.zona) {
+        path.classList.add("is-dim");
+      }
       path.addEventListener("click", function () { setBarrio(rec.barrio, rec.zona); });
       path.addEventListener("keydown", function (e) {
         if (e.key === "Enter" || e.key === " ") { e.preventDefault(); setBarrio(rec.barrio, rec.zona); }
@@ -812,7 +939,7 @@
           { html: b.barrio + (flip ? ' <span class="asun-flip-badge">cambió</span>' : "") },
           { html: winCell(b.win21, 2021) },
           { html: winCell(b.win26, 2026) },
-          pp1(b.margen21), pp1(b.margen26), pp1(b.giro), nf(b.votos26),
+          pp1(b.margen21), pp1(b.margen26), ppNum(b.giro), nf(b.votos26),
         ],
       };
     });
@@ -820,7 +947,7 @@
       { label: "Zona", text: true }, { label: "Barrio", text: true },
       { label: "Ganó 2021" }, { label: "Ganó 2026" },
       { label: "Margen 2021" }, { label: "Margen 2026" },
-      { label: "Giro (pp)" }, { label: "Votos 2026" },
+      { label: "Giro (puntos)" }, { label: "Votos 2026" },
     ], tableRows));
   }
 
@@ -834,9 +961,9 @@
     winners.appendChild(col26);
     box.appendChild(winners);
     box.appendChild(elT("p", "asun-cap",
-      "Rojo = " + forceLabel("ANR") + " · Azul = " + forceLabel("JA", 2021) +
-      " (2021) / " + forceLabel("JA", 2026) +
-      " (2026). Intensidad según |margen| (tope 50 pp). Tocá un barrio para filtrar."));
+      "Rojo = " + forceLabel("ANR") + " · Azul = " + forceLabel("JA", 2026) +
+      ". La intensidad sigue el |margen| del año (hasta 50 puntos). " +
+      "Tocá un barrio para resaltarlo; el resto del mapa se atenúa."));
     var note = el("p", "asun-cap asun-map-note");
     box.appendChild(note);
     panel.appendChild(box);
@@ -945,7 +1072,7 @@
           nf(l.votos21), nf(l.votos26),
           pct1(l.anr21), pct1(l.anr26),
           pct1(l.ja21), pct1(l.ja26),
-          pp1(l.giro),
+          ppNum(l.giro),
         ],
       };
     });
@@ -954,7 +1081,7 @@
       { label: "Votos 2021" }, { label: "Votos 2026" },
       { label: anr + " 2021" }, { label: anr + " 2026" },
       { label: ja21 + " 2021" }, { label: ja26 + " 2026" },
-      { label: "Giro (pp)" },
+      { label: "Giro (puntos)" },
     ], rows));
   }
 
@@ -976,6 +1103,18 @@
 
   /* ------------------------------------------------------- 5. Correlaciones */
 
+  /* Least-squares fit of y on x for the scatter trend line. */
+  function leastSquares(pts) {
+    var n = pts.length;
+    if (n < 2) return null;
+    var sx = 0, sy = 0, sxx = 0, sxy = 0;
+    pts.forEach(function (p) { sx += p.x; sy += p.y; sxx += p.x * p.x; sxy += p.x * p.y; });
+    var denom = n * sxx - sx * sx;
+    if (!denom) return null;
+    var slope = (n * sxy - sx * sy) / denom;
+    return { slope: slope, intercept: (sy - slope * sx) / n };
+  }
+
   function buildScatter(cfg) {
     var W = 720, H = 440, L = 58, R = 18, T = 18, B = 46;
     var iw = W - L - R;
@@ -985,23 +1124,41 @@
     var sy = function (y) { return T + (y1 - y) / (y1 - y0) * ih; };
 
     var s = svg("svg", { viewBox: "0 0 " + W + " " + H, role: "img", "aria-label": cfg.aria });
-    s.appendChild(svg("rect", { x: L, y: T, width: iw, height: ih, fill: "none", stroke: "#e6e6e2" }));
+
+    /* Clip the trend line to the plot area so a steep fit never escapes. */
+    var uid = "asun-clip-" + (buildScatter._n = (buildScatter._n || 0) + 1);
+    var defs = svg("defs");
+    var clip = svg("clipPath", { id: uid });
+    clip.appendChild(svg("rect", { x: L, y: T, width: iw, height: ih }));
+    defs.appendChild(clip);
+    s.appendChild(defs);
+
+    s.appendChild(svg("rect", { x: L, y: T, width: iw, height: ih, fill: "none", stroke: "var(--rule)" }));
 
     var i, nx = cfg.nx || 5, ny = cfg.ny || 4;
     for (i = 0; i <= nx; i++) {
       var xv = x0 + (x1 - x0) * i / nx;
       var xx = sx(xv);
-      s.appendChild(svg("line", { x1: xx, y1: T, x2: xx, y2: T + ih, stroke: "#f0f0ee" }));
+      s.appendChild(svg("line", { x1: xx, y1: T, x2: xx, y2: T + ih, stroke: "var(--rule)" }));
       s.appendChild(svgText({ x: xx.toFixed(1), y: T + ih + 18, "text-anchor": "middle", class: "asun-axis-label" }, cfg.fx(xv)));
     }
     for (i = 0; i <= ny; i++) {
       var yv = y0 + (y1 - y0) * i / ny;
       var yy = sy(yv);
-      s.appendChild(svg("line", { x1: L, y1: yy, x2: L + iw, y2: yy, stroke: "#f0f0ee" }));
+      s.appendChild(svg("line", { x1: L, y1: yy, x2: L + iw, y2: yy, stroke: "var(--rule)" }));
       s.appendChild(svgText({ x: L - 8, y: (yy + 4).toFixed(1), "text-anchor": "end", class: "asun-axis-label" }, cfg.fy(yv)));
     }
     if (cfg.zero && y0 < 0 && y1 > 0) {
       s.appendChild(svg("line", { x1: L, y1: sy(0), x2: L + iw, y2: sy(0), class: "asun-zero" }));
+    }
+
+    var fit = leastSquares(cfg.points);
+    if (fit) {
+      s.appendChild(svg("line", {
+        x1: sx(x0).toFixed(1), y1: sy(fit.slope * x0 + fit.intercept).toFixed(1),
+        x2: sx(x1).toFixed(1), y2: sy(fit.slope * x1 + fit.intercept).toFixed(1),
+        class: "asun-trend", "clip-path": "url(#" + uid + ")",
+      }));
     }
 
     cfg.points.forEach(function (p) {
@@ -1066,7 +1223,7 @@
     var sc2 = buildScatter({
       aria: "Dispersión de pobreza y giro 2021-2026 por barrio.",
       x0: 0, x1: maxP * 1.08, y0: gy0, y1: gy1, zero: true,
-      xLabel: "% Pobreza", yLabel: "Giro (pp)",
+      xLabel: "% Pobreza", yLabel: "Giro (puntos)",
       fx: function (v) { return n1(v * 100) + "%"; },
       fy: function (v) { return n1(v) + ""; },
       points: pts.map(function (b) {
@@ -1114,8 +1271,11 @@
         if (i === j) {
           td.classList.add("asun-heat-diag");
         } else {
-          td.style.background = divColor(v, 1, 0);
-          td.style.color = Math.min(Math.abs(v), 1) > 0.6 ? "#fff" : "var(--ink)";
+          /* Cap at |r| = 1.5 so the blend reaches only ~2/3 saturation and the
+             grid reads as a tint, not a saturated red/blue blob. */
+          td.style.background = divColor(v, 1.5, 0);
+          var tint = Math.min(Math.abs(v), 1.5) / 1.5;
+          td.style.color = tint > 0.62 ? "#fff" : "var(--ink)";
         }
         td.textContent = r2(v);
         tr.appendChild(td);
@@ -1126,7 +1286,8 @@
     heatWrap.appendChild(t);
     panel.appendChild(heatWrap);
     panel.appendChild(elT("p", "asun-note",
-      "Rojo = correlación positiva · Azul = correlación negativa. La intensidad sigue |r|. Cada celda es el coeficiente entre dos indicadores."));
+      "Rojo = +1 · Blanco = 0 · Azul = " + MINUS +
+      "1. La intensidad sigue |r|. Cada celda es el coeficiente entre dos indicadores."));
 
     panel.appendChild(elT("p", "asun-subhead", "% Pobreza vs % " + forceLabel("JA", 2026) + " 2026"));
     var host1 = el("div");
@@ -1134,7 +1295,7 @@
     var note1 = el("p", "asun-note");
     panel.appendChild(note1);
 
-    panel.appendChild(elT("p", "asun-subhead", "% Pobreza vs Giro (pp)"));
+    panel.appendChild(elT("p", "asun-subhead", "% Pobreza vs Giro (puntos)"));
     var host2 = el("div");
     panel.appendChild(host2);
     var note2 = el("p", "asun-note");
